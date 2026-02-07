@@ -9,6 +9,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Game](https://img.shields.io/badge/Mount%20%26%20Blade%20II-Bannerlord-blue)](https://www.taleworlds.com/en/Games/Bannerlord)
+[![Version]([https://img.shields.io/badge/Mount%20%26%20Blade%20II-Bannerlord-blue](https://img.shields.io/badge/Version-1.0.0-blue)
 [![Discord](https://img.shields.io/discord/1234567890?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/Zhnx9SuE6q)
 
 </div>
