@@ -3,7 +3,7 @@
 <!-- Replace with an actual banner image when available -->
 <!-- <img src="assets/banner.png" alt="Editable Encyclopedia Banner" width="800"> -->
 
-# 📜 Editable Encyclopedia
+# 📜 Editable Encyclopedia NEW
 
 **Custom lore & descriptions for Mount & Blade II: Bannerlord**
 
