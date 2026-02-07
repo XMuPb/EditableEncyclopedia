@@ -122,6 +122,9 @@ Documents\Mount and Blade II Bannerlord\Configs\ModSettings\Global\EditableEncyc
 
 ```json
 {
+  "version": 1,
+  "exportedAt": "2026-02-07T12:00:00.0000000Z",
+  "descriptionCount": 4,
   "descriptions": {
     "lord_1_1": "Derthert is the aging king of Vlandia...",
     "lord_2_3": "Caladog is the High King of Battania...",

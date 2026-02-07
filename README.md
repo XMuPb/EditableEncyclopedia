@@ -198,10 +198,13 @@ For a complete integration guide, see [INTEGRATION.md](INTEGRATION.md).
 
 ### Export Format
 
-The JSON export uses a simple format:
+The JSON export uses a versioned format with metadata:
 
 ```json
 {
+  "version": 1,
+  "exportedAt": "2026-02-07T12:00:00.0000000Z",
+  "descriptionCount": 2,
   "descriptions": {
     "hero_lord_123": "Custom description for Lord 123...",
     "settlement_town_456": "Custom description for Town 456..."
@@ -295,11 +298,17 @@ Copyright © 2024 XMuPb
 
 ## 📝 Changelog
 
+### v1.1.0
+
+- ✅ Implemented JSON export/import for sharing descriptions across campaigns and with other players
+- Versioned JSON format with metadata (export timestamp, description count)
+- Import merges descriptions with existing data (existing entries are overwritten)
+- Full source code now included in repository
+
 ### v1.0.0
 
 - 🎉 Initial release
 - Support for Hero, Clan, Kingdom, and Settlement pages
-- Export/Import functionality
 - Reset to default feature
 - Character limit option
 - Comprehensive MCM v5 settings
