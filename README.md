@@ -305,6 +305,7 @@ Copyright © 2024 XMuPb
 - Versioned JSON format with metadata (export timestamp, description count)
 - Import merges descriptions with existing data (existing entries are overwritten)
 - Full source code now included in repository
+- Bug: Encyclopedia becomes inactive. The Encyclopedia works initially, but after a few seconds it becomes inactive. Once this happens, the Encyclopedia hotkey no longer responds. The issue occurs consistently during gameplay without any manual input to disable it.
 
 ### v1.0.0
 
