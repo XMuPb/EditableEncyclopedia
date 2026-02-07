@@ -1,5 +1,5 @@
 <div align="center">
-
+<img src="https://i.imgur.com/M7iApFw.png" alt="Editable Encyclopedia Overview">
 <!-- Replace with an actual banner image when available -->
 <!-- <img src="assets/banner.png" alt="Editable Encyclopedia Banner" width="800"> -->
 
