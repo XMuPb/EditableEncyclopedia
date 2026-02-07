@@ -1,4 +1,4 @@
-# 🔌 Editable Encyclopedia — Integration Guide
+# 🔌 Editable Encyclopedia — Integration Guide NEW
 
 > A guide for Bannerlord mod developers who want to read or react to player-written encyclopedia descriptions.
 
