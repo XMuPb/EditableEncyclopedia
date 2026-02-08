@@ -310,6 +310,9 @@ Copyright © 2024 XMuPb
 
 ## 📝 Changelog
 
+### v1.1.1 (Latest)
+- **Bug fix: Fixed Ctrl+E not refreshing the encyclopedia page after saving — The page now updates immediately after editing
+
 ### v1.1.0
 
 - **Reset to Default (Ctrl+R)** — Press `Ctrl+R` on any encyclopedia page with a custom description to restore the original game text, with a yes/no confirmation dialog
