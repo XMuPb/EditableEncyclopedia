@@ -311,7 +311,7 @@ Copyright © 2024 XMuPb
 ## 📝 Changelog
 
 ### v1.1.1 (Latest)
-- **Bug fix: Fixed Ctrl+E not refreshing the encyclopedia page after saving — The page now updates immediately after editing
+- **Bug fix: Fixed Ctrl+E** not refreshing the encyclopedia page after saving — The page now updates immediately after editing
 
 ### v1.1.0
 
