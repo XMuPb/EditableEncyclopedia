@@ -1,5 +1,5 @@
 <div align="center">
-<img src="https://i.imgur.com/sLgy8RE.png" alt="Editable Encyclopedia Overview">
+<img src="https://i.imgur.com/M7iApFw.png" alt="Editable Encyclopedia Overview">
 <!-- Replace with an actual banner image when available -->
 <!-- <img src="assets/banner.png" alt="Editable Encyclopedia Banner" width="800"> -->
 
@@ -9,7 +9,6 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Game](https://img.shields.io/badge/Mount%20%26%20Blade%20II-Bannerlord-blue)](https://www.taleworlds.com/en/Games/Bannerlord)
-![Version](https://img.shields.io/badge/Version-1.1.0-blue)
 [![Discord](https://img.shields.io/discord/1234567890?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/Zhnx9SuE6q)
 
 </div>
@@ -38,6 +37,7 @@ A **Mount & Blade II: Bannerlord** mod that allows you to edit encyclopedia page
 
 - **Edit Encyclopedia Descriptions** — Press `Ctrl+E` on any encyclopedia page to open a text editor and write your own custom description
 - **Reset to Default** — Press `Ctrl+R` to restore the original game description for any page (with confirmation dialog)
+- **Undo Last Edit** — Press `Ctrl+Z` to instantly revert your most recent edit or reset
 - **Persistent Storage** — All custom descriptions are saved in your campaign save file
 - **Multiple Page Types Supported:**
   - Heroes (characters)
@@ -45,7 +45,12 @@ A **Mount & Blade II: Bannerlord** mod that allows you to edit encyclopedia page
   - Kingdoms / Factions
   - Settlements (towns, castles, villages)
 - **Export / Import** — Export all your custom descriptions to a JSON file and import them into other campaigns via MCM
-- **Character Limit** — Optionally enforce a maximum character limit on descriptions
+- **Export by Type** — Export only Heroes, Clans, Kingdoms, or Settlements separately
+- **Auto-Export on Save** — Optionally keep the JSON export file always up-to-date for other mods
+- **Reset All Descriptions** — Clear all custom descriptions at once from MCM (with confirmation)
+- **Description Statistics** — View a breakdown of your custom descriptions by type and total character count
+- **Visual Indicator** — Optionally show `[Edited]` prefix on customized pages for easy identification
+- **Character Limit** — Optionally enforce a maximum character limit on descriptions (default 5000)
 - **Flexible MCM Settings** — Extensive configuration options via the MCM v5 settings menu
 - **Cross-Mod API** — Other mods can read and subscribe to description changes
 - **Debug Mode** — Enable verbose logging for troubleshooting
@@ -98,6 +103,12 @@ A **Mount & Blade II: Bannerlord** mod that allows you to edit encyclopedia page
 3. Confirm the reset in the dialog
 4. The original game description is restored immediately
 
+### Undo Last Change
+
+1. After editing or resetting a description, the hint will show `Ctrl+Z to Undo`
+2. Press `Ctrl+Z` to revert your most recent change
+3. Works for both edits and resets (one level of undo)
+
 ### Export & Import
 
 #### Export
@@ -131,6 +142,7 @@ If you have MCM v5 installed, you can configure the mod via **Options → Mod Op
 | **Author** | Displays the mod author (XMuPb) |
 | **Version** | Current mod version |
 | **Join Discord** | Opens the Discord invite link in your browser |
+| **Description Statistics** | Shows a popup with total descriptions, breakdown by type, and total character count |
 | **Open Config Folder** | Opens the folder containing MCM settings and export files |
 
 ### General Group
@@ -139,6 +151,8 @@ If you have MCM v5 installed, you can configure the mod via **Options → Mod Op
 |---|---|---|
 | **Show Edit Hint** | `true` | Append `[Ctrl+E to Edit Description]` to encyclopedia pages |
 | **Show Confirmation Messages** | `true` | Display green success messages when saving descriptions |
+| **Show Edited Indicator** | `false` | Prepend `[Edited]` to customized descriptions for easy identification |
+| **Auto-Export on Save** | `false` | Automatically export to JSON every time a description is saved or reset |
 
 ### Supported Pages Group
 
@@ -157,6 +171,11 @@ Enable/disable editing for specific encyclopedia page types:
 |---|---|
 | **Export Descriptions to JSON** | Exports all custom descriptions to a shareable JSON file |
 | **Import Descriptions from JSON** | Imports descriptions from a JSON file and merges them into the current campaign |
+| **Export Heroes Only** | Exports only Hero descriptions |
+| **Export Clans Only** | Exports only Clan descriptions |
+| **Export Kingdoms Only** | Exports only Kingdom descriptions |
+| **Export Settlements Only** | Exports only Settlement descriptions |
+| **Reset All Descriptions** | Removes ALL custom descriptions from the current campaign (with confirmation) |
 
 ### Advanced Group
 
@@ -164,7 +183,7 @@ Enable/disable editing for specific encyclopedia page types:
 |---|---|---|
 | **Initial Key Poll Delay** | `500ms` | Delay before `Ctrl+E` starts working on a page. Prevents accidental triggers when rapidly navigating. |
 | **Key Poll Interval** | `50ms` | How often the mod checks for `Ctrl+E`. Lower = more responsive, higher = less CPU usage. |
-| **Max Description Length** | `0` (unlimited) | Set to a positive number to enforce a character limit. Descriptions exceeding the limit are automatically truncated on save. |
+| **Max Description Length** | `5000` | Maximum characters allowed per description. Set to 0 for unlimited. Saves exceeding the limit are rejected with a warning. |
 
 ### Debug Group
 
@@ -227,7 +246,7 @@ The JSON export includes metadata and all custom descriptions:
 ### How It Works
 
 1. Uses **Harmony** to patch encyclopedia page `Refresh()` methods
-2. Polls for `Ctrl+E` / `Ctrl+R` keypresses via a background timer using Win32 `GetAsyncKeyState`
+2. Polls for `Ctrl+E` / `Ctrl+R` / `Ctrl+Z` keypresses via a background timer using Win32 `GetAsyncKeyState`
 3. Displays native Bannerlord dialogs for editing (text inquiry) and resetting (yes/no confirmation)
 4. Poller runs for the duration of the campaign and only acts when an encyclopedia object is tracked
 
@@ -310,8 +329,16 @@ Copyright © 2024 XMuPb
 
 ## 📝 Changelog
 
-### v1.1.1 (Latest)
-- **Bug fix: Fixed Ctrl+E** not refreshing the encyclopedia page after saving — The page now updates immediately after editing
+### v1.1.1
+
+- **Undo Last Edit (Ctrl+Z)** — Press `Ctrl+Z` on any encyclopedia page to instantly revert your most recent edit or reset (one level of undo)
+- **Auto-Export on Save** — New MCM toggle in General group that automatically keeps the JSON export file up-to-date whenever you save or reset a description
+- **Description Statistics** — New "Show Stats" button in MCM Info group displaying total descriptions, breakdown by type (Heroes/Clans/Kingdoms/Settlements), and total character count
+- **Reset All Descriptions** — New button in MCM Sharing group to clear all custom descriptions at once (with confirmation dialog)
+- **Visual Indicator** — New "Show Edited Indicator" toggle in MCM General group that prepends `[Edited]` to customized descriptions for easy identification
+- **Export by Type** — New buttons in MCM Sharing group to export only Heroes, Clans, Kingdoms, or Settlements separately
+- **Character Limit** — Max Description Length now defaults to 5000 (was unlimited); saves exceeding the limit are rejected with a warning; edit popup title shows current/max character count
+- **Dynamic hint text** — Now shows `Ctrl+Z to Undo` when an undo action is available
 
 ### v1.1.0
 
