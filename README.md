@@ -329,6 +329,14 @@ Copyright © 2024 XMuPb
 
 ## 📝 Changelog
 
+### v1.1.2
+
+- **Localization System** — Full multi-language support with 11 built-in languages (English, Turkish, German, French, Spanish, Chinese, Russian, Portuguese, Korean, Japanese, Polish). Language files auto-generated in Documents folder — users can add or customize translations
+- **Language Selection** — New MCM setting in Advanced group to choose your language (requires restart)
+- **Fix: Hotkeys firing when encyclopedia is closed** — Ctrl+E/R/Z no longer trigger on the campaign map after closing the encyclopedia
+- **Fix: Hotkeys blocked on non-standard map screens** — Now works correctly with War Sail mode (NavalMapScreen) and other modded map screens
+- **Fix: Encyclopedia close detection after edit/reset/undo** — Layer count tracking no longer corrupted by popup layers
+
 ### v1.1.1
 
 - **Undo Last Edit (Ctrl+Z)** — Press `Ctrl+Z` on any encyclopedia page to instantly revert your most recent edit or reset (one level of undo)
