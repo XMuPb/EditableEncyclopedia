@@ -9,7 +9,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Game](https://img.shields.io/badge/Mount%20%26%20Blade%20II-Bannerlord-blue)](https://www.taleworlds.com/en/Games/Bannerlord)
-[![Discord](https://img.shields.io/discord/1234567890?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/Zhnx9SuE6q)
+[![Discord](https://img.shields.io/discord/1234567890?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.com/users/404393620897136640)
 
 </div>
 
@@ -36,23 +36,33 @@ A **Mount & Blade II: Bannerlord** mod that allows you to edit encyclopedia page
 ## ✨ Features
 
 - **Edit Encyclopedia Descriptions** — Press `Ctrl+E` on any encyclopedia page to open a text editor and write your own custom description
+- **Edit Hero Names/Titles (Ctrl+N)** — Change any hero's display name and title directly from the encyclopedia
+- **Edit Banners/Flags (Ctrl+B)** — Paste a banner code to change the banner for Heroes, Clans, Kingdoms, or Settlements
+- **Edit Hero Culture (Ctrl+U)** — Change any hero's culture using a clickable carousel — no typing needed
+- **Edit Hero Occupation (Ctrl+O)** — Change any hero's occupation with friendly display names (e.g., "Gang Leader" instead of "GangLeader")
 - **Reset to Default** — Press `Ctrl+R` to restore the original game description for any page (with confirmation dialog)
 - **Undo Last Edit** — Press `Ctrl+Z` to instantly revert your most recent edit or reset
-- **Persistent Storage** — All custom descriptions are saved in your campaign save file
+- **Persistent Storage** — All custom data is saved in your campaign save file
 - **Multiple Page Types Supported:**
-  - Heroes (characters)
-  - Clans
-  - Kingdoms / Factions
-  - Settlements (towns, castles, villages)
-- **Export / Import** — Export all your custom descriptions to a JSON file and import them into other campaigns via MCM
-- **Export by Type** — Export only Heroes, Clans, Kingdoms, or Settlements separately
+  - Heroes (characters) — descriptions, names, titles, banners, cultures, occupations
+  - Clans — descriptions, banners
+  - Kingdoms / Factions — descriptions, banners
+  - Settlements (towns, castles, villages) — descriptions, banners
+- **Manage Custom Cultures/Occupations** — View and delete custom assignments from MCM settings
+- **Dynamic Occupation Discovery** — Automatically discovers all occupation types at runtime, including those added by other mods
+- **Prevent Kingdom Color Overwrites** — Re-applies your custom banners when the game forces them back to default colors
+- **Export / Import** — Export all custom data (descriptions, names, titles, banners, cultures, occupations) to a JSON file and import into other campaigns via MCM
+- **Export by Type** — Export only Heroes, Clans, Kingdoms, Settlements, or Banners separately
 - **Auto-Export on Save** — Optionally keep the JSON export file always up-to-date for other mods
+- **Auto-Import on Load** — Optionally import data from the JSON file when loading a save
 - **Reset All Descriptions** — Clear all custom descriptions at once from MCM (with confirmation)
-- **Description Statistics** — View a breakdown of your custom descriptions by type and total character count
+- **Description Statistics** — View a breakdown of all custom edits: descriptions, names, titles, banners, cultures, occupations
+- **Edit Timestamp** — Optionally show the in-game date when a description was last edited
 - **Visual Indicator** — Optionally show `[Edited]` prefix on customized pages for easy identification
 - **Character Limit** — Optionally enforce a maximum character limit on descriptions (default 5000)
+- **Localization** — Full multi-language support with 11 built-in languages
 - **Flexible MCM Settings** — Extensive configuration options via the MCM v5 settings menu
-- **Cross-Mod API** — Other mods can read and subscribe to description changes
+- **Cross-Mod API** — Other mods can read cultures, occupations, descriptions, banners, and subscribe to changes
 - **Debug Mode** — Enable verbose logging for troubleshooting
 
 ---
@@ -150,31 +160,47 @@ If you have MCM v5 installed, you can configure the mod via **Options → Mod Op
 | Setting | Default | Description |
 |---|---|---|
 | **Show Edit Hint** | `true` | Append `[Ctrl+E to Edit Description]` to encyclopedia pages |
+| **Show Name Edit Hint** | `true` | Show `[Ctrl+N to Edit Name]` hint on hero pages |
+| **Show Banner Edit Hint** | `true` | Show `[Ctrl+B to Edit Banner]` hint on encyclopedia pages |
+| **Show Culture Edit Hint** | `true` | Show `[Ctrl+U to Edit Culture]` hint on hero pages |
+| **Show Occupation Edit Hint** | `true` | Show `[Ctrl+O to Edit Occupation]` hint on hero pages |
 | **Show Confirmation Messages** | `true` | Display green success messages when saving descriptions |
 | **Show Edited Indicator** | `false` | Prepend `[Edited]` to customized descriptions for easy identification |
-| **Auto-Export on Save** | `false` | Automatically export to JSON every time a description is saved or reset |
+| **Show Edit Timestamp** | `true` | Display the in-game date when a description was last edited (e.g., "Edited: Day 15 of Spring, 1084") |
+| **Auto-Export on Save** | `false` | Automatically export all data to the shared JSON file every time a save occurs |
+| **Auto-Import on Load** | `false` | Automatically import all data from the shared JSON file when a save is loaded |
 
 ### Supported Pages Group
 
 Enable/disable editing for specific encyclopedia page types:
 
-| Setting | Default |
-|---|---|
-| **Enable Hero Editing** | `true` |
-| **Enable Clan Editing** | `true` |
-| **Enable Kingdom Editing** | `true` |
-| **Enable Settlement Editing** | `true` |
+| Setting | Default | Description |
+|---|---|---|
+| **Enable Hero Editing** | `true` | Allow editing descriptions on Hero encyclopedia pages |
+| **Enable Hero Name/Title Editing** | `true` | Allow editing hero names and titles using `Ctrl+N` |
+| **Enable Clan Editing** | `true` | Allow editing descriptions on Clan encyclopedia pages |
+| **Enable Kingdom Editing** | `true` | Allow editing descriptions on Kingdom/Faction pages |
+| **Enable Settlement Editing** | `true` | Allow editing descriptions on Settlement pages |
+| **Enable Banner/Flag Editing** | `true` | Allow editing banners/flags using `Ctrl+B`. Paste a banner code to change the banner for Heroes, Clans, Kingdoms, or Settlements |
+| **Enable Culture Editing** | `true` | Allow changing a hero's culture using `Ctrl+U` |
+| **Enable Occupation Editing** | `true` | Allow changing a hero's occupation using `Ctrl+O` |
+| **Prevent Kingdom Color Overwrites** | `true` | Periodically re-applies your custom banners when the game forces them back to default culture colors (common in 1.3.13) |
+| **Create Custom Banner** | Button | Opens bannerlord.party/banner in your browser to design a banner and copy its code |
+| **Manage Custom Cultures** | Button | View and delete custom culture assignments. Restores heroes to original culture |
+| **Manage Custom Occupations** | Button | View and delete custom occupation assignments. Restores heroes to original occupation |
 
 ### Sharing Group
 
 | Setting | Description |
 |---|---|
-| **Export Descriptions to JSON** | Exports all custom descriptions to a shareable JSON file |
-| **Import Descriptions from JSON** | Imports descriptions from a JSON file and merges them into the current campaign |
+| **Export All to JSON** | Exports all custom data (descriptions, names, titles, banners) to a shareable JSON file |
+| **Import All from JSON** | Imports all data from a JSON file and merges into the current campaign |
 | **Export Heroes Only** | Exports only Hero descriptions |
 | **Export Clans Only** | Exports only Clan descriptions |
 | **Export Kingdoms Only** | Exports only Kingdom descriptions |
 | **Export Settlements Only** | Exports only Settlement descriptions |
+| **Export Banners Only** | Exports only custom banner codes |
+| **Import Banners Only** | Imports only custom banner codes from the JSON file |
 | **Reset All Descriptions** | Removes ALL custom descriptions from the current campaign (with confirmation) |
 
 ### Advanced Group
@@ -231,14 +257,26 @@ The JSON export includes metadata and all custom descriptions:
 
 ```json
 {
-  "version": 1,
-  "exportedAt": "2026-02-07T12:00:00.0000000Z",
-  "descriptionCount": 4,
+  "version": 3,
+  "exportedAt": "2026-02-22T12:00:00.0000000Z",
+  "descriptionCount": 2,
   "descriptions": {
     "lord_1_1": "Derthert is the aging king of Vlandia...",
-    "lord_2_3": "Caladog is the High King of Battania...",
-    "settlement_town_V1": "Pravend is a coastal town...",
-    "clan_empire_1": "The noble house of Pethros..."
+    "settlement_town_V1": "Pravend is a coastal town..."
+  },
+  "nameCount": 0,
+  "names": {},
+  "titleCount": 0,
+  "titles": {},
+  "bannerCount": 0,
+  "banners": {},
+  "cultureCount": 1,
+  "cultures": {
+    "main_hero": "nord|Viking Warrior"
+  },
+  "occupationCount": 1,
+  "occupations": {
+    "main_hero": "GangLeader"
   }
 }
 ```
@@ -246,7 +284,7 @@ The JSON export includes metadata and all custom descriptions:
 ### How It Works
 
 1. Uses **Harmony** to patch encyclopedia page `Refresh()` methods
-2. Polls for `Ctrl+E` / `Ctrl+R` / `Ctrl+Z` keypresses via a background timer using Win32 `GetAsyncKeyState`
+2. Polls for `Ctrl+E` / `Ctrl+R` / `Ctrl+Z` / `Ctrl+N` / `Ctrl+U` / `Ctrl+O` keypresses via a background timer using Win32 `GetAsyncKeyState`
 3. Displays native Bannerlord dialogs for editing (text inquiry) and resetting (yes/no confirmation)
 4. Poller runs for the duration of the campaign and only acts when an encyclopedia object is tracked
 
@@ -294,7 +332,7 @@ The JSON export includes metadata and all custom descriptions:
 
 - Enable **Debug Mode** for more details
 - Check the game's log files in `Documents\Mount and Blade II Bannerlord\`
-- Report issues on the [Discord server](https://discord.gg/Zhnx9SuE6q)
+- Report issues on the [Discord server](https://discord.com/users/404393620897136640)
 
 </details>
 
@@ -304,7 +342,7 @@ The JSON export includes metadata and all custom descriptions:
 
 Join the community Discord for support, suggestions, and discussion:
 
-[![Discord](https://img.shields.io/badge/Join%20Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/Zhnx9SuE6q)
+[![Discord](https://img.shields.io/badge/Join%20Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/users/404393620897136640)
 
 ---
 
@@ -328,6 +366,19 @@ Copyright © 2024 XMuPb
 ---
 
 ## 📝 Changelog
+
+### v1.1.3
+
+- **Culture Editing (Ctrl+U)** — Press `Ctrl+U` on any hero page to change their culture using a clickable carousel. Click to select, "Next" to see more. Supports custom culture names (e.g., "Viking Warrior")
+- **Occupation Editing (Ctrl+O)** — Press `Ctrl+O` on any hero page to change their occupation. Fully clickable — no typing required
+- **Friendly Occupation Names** — Occupations display as readable names everywhere: "Gang Leader" instead of "GangLeader", "Rural Notable" instead of "RuralNotable", etc.
+- **Dynamic Occupation Discovery** — Occupation list is built dynamically from the game's enum at runtime, automatically picking up new occupations from game updates or other mods
+- **Manage Custom Cultures (MCM)** — New "Delete Cultures" button in MCM settings to view and remove custom culture assignments. Restores heroes to their original culture
+- **Manage Custom Occupations (MCM)** — New "Delete Occupations" button in MCM settings to view and remove custom occupation assignments. Restores heroes to their original occupation
+- **JSON Export v3** — Export file now includes `cultures` and `occupations` sections alongside descriptions, names, titles, and banners. Backward-compatible with v1/v2 imports
+- **Culture/Occupation API** — New public API methods: `GetHeroCulture()`, `GetHeroOccupation()`, `GetOccupationDisplayName()`, `GetAllCustomCultures()`, `GetAllCustomOccupations()`
+- **Occupation Name Localization** — All occupation names are translatable via localization keys. Turkish translations included
+- **Fix: Duplicate custom filters** — Custom culture/occupation filter checkboxes no longer duplicate on encyclopedia list page refresh
 
 ### v1.1.2
 

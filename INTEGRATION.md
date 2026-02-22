@@ -222,28 +222,46 @@ The JSON file is created when the player uses the **Export** button in MCM setti
 Documents\Mount and Blade II Bannerlord\Configs\ModSettings\Global\EditableEncyclopedia\descriptions_export.json
 ```
 
-### JSON Format
+### JSON Format (v3)
 
 ```json
 {
-  "version": 1,
-  "exportedAt": "2025-01-15T12:30:00.0000000Z",
-  "descriptionCount": 4,
+  "version": 3,
+  "exportedAt": "2026-02-22T12:30:00.0000000Z",
+  "descriptionCount": 2,
   "descriptions": {
-    "lord_1_1": "Derthert is the aging king of Vlandia. Once a formidable warrior...",
-    "lord_2_3": "Caladog is the High King of Battania. A charismatic leader...",
-    "settlement_town_V1": "Pravend is a coastal town known for its bustling harbor...",
-    "clan_empire_1": "The noble house of Pethros has served the Empire for generations..."
+    "lord_1_1": "Derthert is the aging king of Vlandia...",
+    "settlement_town_V1": "Pravend is a coastal town..."
+  },
+  "nameCount": 0,
+  "names": {},
+  "titleCount": 0,
+  "titles": {},
+  "bannerCount": 0,
+  "banners": {},
+  "cultureCount": 1,
+  "cultures": {
+    "lord_6_12": "nord|Viking Warrior"
+  },
+  "occupationCount": 1,
+  "occupations": {
+    "lord_6_12": "GangLeader"
   }
 }
 ```
 
 | Field | Type | Description |
 |---|---|---|
-| `version` | `int` | Format version (currently `1`) |
+| `version` | `int` | Format version (currently `3`) |
 | `exportedAt` | `string` | ISO 8601 UTC timestamp of when the export was created |
-| `descriptionCount` | `int` | Number of descriptions in the file |
-| `descriptions` | `object` | Key-value pairs where key = StringId, value = description text |
+| `descriptions` | `object` | Key-value pairs: StringId → description text |
+| `names` | `object` | Key-value pairs: StringId → custom name |
+| `titles` | `object` | Key-value pairs: StringId → custom title |
+| `banners` | `object` | Key-value pairs: StringId → banner code |
+| `cultures` | `object` | Key-value pairs: heroId → `"cultureId\|displayName"` (v3+) |
+| `occupations` | `object` | Key-value pairs: heroId → occupation enum name (v3+) |
+
+> **Backward compatibility:** The importer reads v1, v2, and v3 files. Missing sections are simply skipped.
 
 ### Reading from Your Mod
 
@@ -427,15 +445,15 @@ Dictionary<string, string> EditableEncyclopediaAPI.GetAllSettlementDescriptions(
 
 ```csharp
 /// <summary>
-/// Exports all descriptions to the shared JSON file on disk.
+/// Exports all data (descriptions, names, titles, banners, cultures, occupations)
+/// to the shared JSON file on disk (v3 format).
 /// Returns true on success, false on failure.
 /// </summary>
 bool EditableEncyclopediaAPI.ExportToSharedFile()
 
 /// <summary>
-/// Imports descriptions from the shared JSON file and merges them into
-/// the current campaign. Existing descriptions with the same ID are overwritten.
-/// Returns the number of descriptions imported, or -1 on failure.
+/// Imports all data from the shared JSON file and merges into the current campaign.
+/// Supports v1, v2, and v3 formats. Returns total entries imported, or -1 on failure.
 /// </summary>
 int EditableEncyclopediaAPI.ImportFromSharedFile()
 
@@ -443,6 +461,37 @@ int EditableEncyclopediaAPI.ImportFromSharedFile()
 /// Returns the full path to the shared descriptions JSON file.
 /// </summary>
 string EditableEncyclopediaAPI.GetSharedFilePath()
+```
+
+### Culture/Occupation Methods (v1.1.3+)
+
+```csharp
+/// <summary>
+/// Returns the custom culture display name for a hero, or null if none set.
+/// </summary>
+string EditableEncyclopediaAPI.GetHeroCulture(string heroId)
+
+/// <summary>
+/// Returns the custom occupation value for a hero, or -1 if none set.
+/// </summary>
+int EditableEncyclopediaAPI.GetHeroOccupation(string heroId)
+
+/// <summary>
+/// Returns a friendly display name for an occupation value (e.g., 21 → "Gang Leader").
+/// </summary>
+string EditableEncyclopediaAPI.GetOccupationDisplayName(int occupationValue)
+
+/// <summary>
+/// Returns the count of heroes with custom culture/occupation assignments.
+/// </summary>
+int EditableEncyclopediaAPI.GetCustomCultureCount()
+int EditableEncyclopediaAPI.GetCustomOccupationCount()
+
+/// <summary>
+/// Returns all custom cultures/occupations as dictionaries for export.
+/// </summary>
+Dictionary<string, string> EditableEncyclopediaAPI.GetAllCustomCultures()
+Dictionary<string, string> EditableEncyclopediaAPI.GetAllCustomOccupations()
 ```
 
 ---
@@ -826,7 +875,7 @@ This ensures:
 If you have questions about integrating with Editable Encyclopedia, or encounter issues:
 
 1. **Check this guide first** - most common scenarios are covered above
-2. **Join the Discord:** [https://discord.gg/Zhnx9SuE6q](https://discord.gg/Zhnx9SuE6q)
+2. **Join the Discord:** [https://discord.com/users/404393620897136640](https://discord.com/users/404393620897136640)
 3. **Open an issue on GitHub:** [https://github.com/XMuPb/EditableEncyclopedia/issues](https://github.com/XMuPb/EditableEncyclopedia/issues)
 
 ---
