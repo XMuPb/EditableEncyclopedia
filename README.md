@@ -383,6 +383,7 @@ Copyright © 2024 XMuPb
 - **Smart Re-apply** — Culture and occupation re-apply on page refresh now checks current value before doing expensive reflection
 - **Statistics Updated** — MCM Statistics popup now reflects all importable data types
 - **JSON Integration** — Export/Import and Auto-Import/Auto-Export now handle all data sections consistently
+- **Troop Assignment in Culture** — You can now assign Troops to a custom culture, linking them to that culture's roster
 - **Custom Names for Settlements, Kingdoms & Clans** — Press `Ctrl+N` on any Settlement, Kingdom, or Clan encyclopedia page to set a custom display name
 - **Settlement Hover Tooltip Culture** — Hovering over any settlement on the campaign map now shows a "Culture" line in the tooltip, displaying the settlement's culture (or the owner's custom culture if one is assigned via the mod)
 - **Villages Included in Culture Updates** — When a clan leader's culture is changed, all their villages now also update (previously only towns and castles were updated)
