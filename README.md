@@ -367,6 +367,28 @@ Copyright © 2024 XMuPb
 
 ## 📝 Changelog
 
+### v1.1.4
+
+- **Auto-Import now loads Cultures & Occupations from JSON** — Auto-Import on Load now imports all data sections (descriptions, names, titles, banners, cultures, occupations) matching the full manual import behavior
+- **Culture Editing Fix** — Fixed a bug where selecting a new culture via Ctrl+U would not actually apply the change to the hero. Now uses CharacterObject-first reflection with full fallback chain across all 5 code paths
+- **Occupation Editing Fix** — Applied the same dual-set reflection pattern to all 5 occupation code paths for full robustness across Bannerlord versions
+- **Native Search in Carousel** — Culture and occupation selection carousels now have the game's built-in search enabled
+- **Reflection Guard** — If culture/occupation reflection fails to set the value, the change is not saved to persistence (prevents ghost entries)
+- **Reset Safety** — If the original culture/occupation no longer exists in the game, shows a warning instead of setting null
+- **Display Name Validation** — Custom culture display names are trimmed and capped at 40 characters
+- **Bulk Delete** — MCM "Delete Cultures" and "Delete Occupations" now offer "Delete All" with confirmation, in addition to one-by-one review
+- **Original Value in Delete Carousel** — MCM delete carousels now show what the hero will be reset to (both culture and occupation)
+- **Custom Filter Indicators** — Custom culture and occupation filters in the encyclopedia list view are marked with a star to distinguish from vanilla
+- **Filter Performance** — Culture/occupation reference sets for filter detection are now cached (5s) instead of rebuilt every refresh
+- **Smart Re-apply** — Culture and occupation re-apply on page refresh now checks current value before doing expensive reflection
+- **Statistics Updated** — MCM Statistics popup now reflects all importable data types
+- **JSON Integration** — Export/Import and Auto-Import/Auto-Export now handle all data sections consistently
+- **Custom Names for Settlements, Kingdoms & Clans** — Press `Ctrl+N` on any Settlement, Kingdom, or Clan encyclopedia page to set a custom display name
+- **Settlement Hover Tooltip Culture** — Hovering over any settlement on the campaign map now shows a "Culture" line in the tooltip, displaying the settlement's culture (or the owner's custom culture if one is assigned via the mod)
+- **Villages Included in Culture Updates** — When a clan leader's culture is changed, all their villages now also update (previously only towns and castles were updated)
+- **Fixed Custom Culture Name Setting** — Custom culture names are now correctly set by walking the full type hierarchy (`BasicCultureObject.<Name>k__BackingField`), fixing blank names on custom cultures
+- **Version Bump** — Updated to v1.1.4
+
 ### v1.1.3
 
 - **Culture Editing (Ctrl+U)** — Press `Ctrl+U` on any hero page to change their culture using a clickable carousel. Click to select, "Next" to see more. Supports custom culture names (e.g., "Viking Warrior")

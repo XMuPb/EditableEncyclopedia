@@ -463,7 +463,7 @@ int EditableEncyclopediaAPI.ImportFromSharedFile()
 string EditableEncyclopediaAPI.GetSharedFilePath()
 ```
 
-### Culture/Occupation Methods (v1.1.3+)
+### Culture/Occupation Methods (v1.1.4+)
 
 ```csharp
 /// <summary>
