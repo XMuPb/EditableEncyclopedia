@@ -350,7 +350,11 @@ Join the community Discord for support, suggestions, and discussion:
 
 This mod is licensed under the [MIT License](https://opensource.org/licenses/MIT).
 
-Copyright © 2024 XMuPb
+## Licensing
+
+**Documentation (README, roadmap text, images):** © 2026 XMuPb. All rights reserved.
+No permission is granted to copy/publish this documentation (or substantial portions of it)
+outside this repository without written permission.
 
 ---
 
