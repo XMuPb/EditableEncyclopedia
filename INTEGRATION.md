@@ -20,7 +20,9 @@
 
 ## Overview
 
-Editable Encyclopedia allows players to write custom descriptions for Heroes, Clans, Kingdoms, and Settlements. Other mods can read these descriptions to enrich their own functionality — for example, an AI dialogue mod could use player-written character backstories as context.
+Editable Encyclopedia allows players to write custom descriptions, lore fields (backstory, personality, goals, relationships, rumors, chronicle), and tags for **5 entity types**: Heroes, Clans, Kingdoms, Settlements, and **Concepts**. Other mods can read this data to enrich their own functionality — for example, an AI dialogue mod could use player-written character backstories as context.
+
+> **v2.0.0 code quality overhaul:** All internal code now uses diagnostic logging via `MCMSettings.DebugLog()` and reflection-safe access patterns, making integration debugging significantly easier. See [v2.0.0 API Improvements](#v200-api-improvements) for details.
 
 There are **two ways** to integrate:
 
@@ -222,12 +224,12 @@ The JSON file is created when the player uses the **Export** button in MCM setti
 Documents\Mount and Blade II Bannerlord\Configs\ModSettings\Global\EditableEncyclopedia\descriptions_export.json
 ```
 
-### JSON Format (v3)
+### JSON Format (v11)
 
 ```json
 {
-  "version": 3,
-  "exportedAt": "2026-02-22T12:30:00.0000000Z",
+  "version": 11,
+  "exportedAt": "2026-03-24T12:00:00.0000000Z",
   "descriptionCount": 2,
   "descriptions": {
     "lord_1_1": "Derthert is the aging king of Vlandia...",
@@ -246,13 +248,50 @@ Documents\Mount and Blade II Bannerlord\Configs\ModSettings\Global\EditableEncyc
   "occupationCount": 1,
   "occupations": {
     "lord_6_12": "GangLeader"
-  }
+  },
+  "cultureDefCount": 0,
+  "cultureDefs": {},
+  "heroInfoFieldCount": 2,
+  "heroInfoFields": {
+    "backstory_lord_1_1": "Born in the highlands of Vlandia...",
+    "chronicle_main_hero": "Day 15 of Spring, 1084\nDefeated the bandits..."
+  },
+  "tagCount": 1,
+  "tags": {
+    "lord_1_1": "ally, king"
+  },
+  "timestampCount": 0,
+  "timestamps": {},
+  "journalCount": 1,
+  "journal": {
+    "lord_1_1": "Day 15 of Spring, 1084|[War] Defeated Ragnar near Varcheg\nDay 16 of Spring, 1084|[Politics] Became ruler"
+  },
+  "relationNoteCount": 1,
+  "relationNotes": {
+    "main_hero_lord_1_1": "Trusted ally and king"
+  },
+  "tagNoteCount": 1,
+  "tagNotes": {
+    "lord_1_1|ally": "Helped me in the siege of Pravend"
+  },
+  "relationHistoryCount": 0,
+  "relationHistory": {},
+  "tagCategoryCount": 0,
+  "tagCategories": {},
+  "tagPresetCount": 0,
+  "tagPresets": {},
+  "perHeroAutoTagThresholdCount": 0,
+  "perHeroAutoTagThresholds": {},
+  "relationNoteTagCount": 0,
+  "relationNoteTags": {},
+  "relationNoteTagLockCount": 0,
+  "relationNoteTagLocks": {}
 }
 ```
 
 | Field | Type | Description |
 |---|---|---|
-| `version` | `int` | Format version (currently `3`) |
+| `version` | `int` | Format version (currently `11`) |
 | `exportedAt` | `string` | ISO 8601 UTC timestamp of when the export was created |
 | `descriptions` | `object` | Key-value pairs: StringId → description text |
 | `names` | `object` | Key-value pairs: StringId → custom name |
@@ -260,8 +299,21 @@ Documents\Mount and Blade II Bannerlord\Configs\ModSettings\Global\EditableEncyc
 | `banners` | `object` | Key-value pairs: StringId → banner code |
 | `cultures` | `object` | Key-value pairs: heroId → `"cultureId\|displayName"` (v3+) |
 | `occupations` | `object` | Key-value pairs: heroId → occupation enum name (v3+) |
+| `cultureDefs` | `object` | Key-value pairs: culture StringId → troop tree definition (v4+) |
+| `heroInfoFields` | `object` | Key-value pairs: `fieldKey_heroId` → narrative text (v4+) |
+| `tags` | `object` | Key-value pairs: StringId → comma-separated tag list (v5+) |
+| `timestamps` | `object` | Key-value pairs: StringId → edit date string (v6+) |
+| `journal` | `object` | Key-value pairs: StringId → newline-separated `"date\|text"` entries (v7+) |
+| `relationNotes` | `object` | Key-value pairs: `"heroId_targetHeroId"` → note text (v8+) |
+| `tagNotes` | `object` | Key-value pairs: `"objectId\|tagName"` → annotation text (v9+) |
+| `relationHistory` | `object` | Key-value pairs: `"heroId_targetHeroId"` → relation change history (v10+) |
+| `tagCategories` | `object` | Key-value pairs: category name → comma-separated tag list (v10+) |
+| `tagPresets` | `object` | Key-value pairs: preset name → comma-separated tag list (v10+) |
+| `perHeroAutoTagThresholds` | `object` | Key-value pairs: heroId → `"enemyThreshold\|friendThreshold"` (v10+) |
+| `relationNoteTags` | `object` | Key-value pairs: `"viewingHeroId_targetHeroId"` → tags on relation notes (v11+) |
+| `relationNoteTagLocks` | `object` | Key-value pairs: `"viewingHeroId_targetHeroId"` → lock state for relation note tags (v11+) |
 
-> **Backward compatibility:** The importer reads v1, v2, and v3 files. Missing sections are simply skipped.
+> **Backward compatibility:** The importer reads v1 through v11 files. Missing sections are simply skipped.
 
 ### Reading from Your Mod
 
@@ -445,25 +497,135 @@ Dictionary<string, string> EditableEncyclopediaAPI.GetAllSettlementDescriptions(
 
 ```csharp
 /// <summary>
-/// Exports all data (descriptions, names, titles, banners, cultures, occupations)
-/// to the shared JSON file on disk (v3 format).
+/// Exports all data to the shared JSON file on disk (v11 format, 19 data sections):
+/// descriptions, names, titles, banners, cultures, occupations, cultureDefs,
+/// heroInfoFields, tags, timestamps, journal, relationNotes, tagNotes,
+/// relationHistory, tagCategories, tagPresets, perHeroAutoTagThresholds,
+/// relationNoteTags, relationNoteTagLocks.
 /// Returns true on success, false on failure.
 /// </summary>
 bool EditableEncyclopediaAPI.ExportToSharedFile()
 
 /// <summary>
 /// Imports all data from the shared JSON file and merges into the current campaign.
-/// Supports v1, v2, and v3 formats. Returns total entries imported, or -1 on failure.
+/// Supports v1 through v11 formats. Missing sections are skipped.
+/// Returns total entries imported, or -1 on failure.
 /// </summary>
 int EditableEncyclopediaAPI.ImportFromSharedFile()
+
+/// <summary>
+/// Imports from shared JSON file and returns per-section counts.
+/// ImportResult has: Descriptions, Names, Titles, Banners, CultureDefs,
+/// Cultures, Occupations, HeroInfoFields, Tags, Journal, RelationNotes,
+/// TagNotes, and Total properties.
+/// </summary>
+ImportResult EditableEncyclopediaAPI.ImportFromSharedFileDetailed()
 
 /// <summary>
 /// Returns the full path to the shared descriptions JSON file.
 /// </summary>
 string EditableEncyclopediaAPI.GetSharedFilePath()
+
+/// Export by type — exports only specific entity categories:
+bool EditableEncyclopediaAPI.ExportHeroDescriptions()
+bool EditableEncyclopediaAPI.ExportClanDescriptions()
+bool EditableEncyclopediaAPI.ExportKingdomDescriptions()
+bool EditableEncyclopediaAPI.ExportSettlementDescriptions()
+bool EditableEncyclopediaAPI.ExportBannerCodes()
+
+/// Import banners only from the shared JSON file:
+int EditableEncyclopediaAPI.ImportBannersFromSharedFile()
 ```
 
-### Culture/Occupation Methods (v1.1.4+)
+**Direct file access** (for mods that don't reference the DLL):
+
+```csharp
+// Read the JSON file directly using SharedFileExporter:
+SharedFileExporter.ExportData data = SharedFileExporter.ImportAll();
+// data.Descriptions, data.Names, data.Titles, data.Banners,
+// data.Cultures, data.Occupations, data.CultureDefs, data.HeroInfoFields,
+// data.Tags, data.Timestamps, data.Journal, data.RelationNotes,
+// data.TagNotes, data.RelationHistory, data.TagCategories,
+// data.TagPresets, data.PerHeroAutoTagThresholds
+// — each is Dictionary<string, string> or null if section missing
+
+// Get file path:
+string path = SharedFileExporter.GetExportFilePath();
+// → Documents\Mount and Blade II Bannerlord\Configs\ModSettings\
+//   Global\EditableEncyclopedia\descriptions_export.json
+```
+
+### Custom Names, Titles & Banners (v1.1.0+)
+
+These are accessed via `EncyclopediaEditBehavior.Instance` (the campaign behavior singleton), not the static API class.
+
+**v2.0.0 name validation:** Names set via the mod's Ctrl+N popup are now sanitized before being stored:
+- Control characters (newlines, tabs, etc.) are stripped
+- Max length is enforced (configurable via MCM, default 100 characters)
+- The user is warned on-screen if characters were removed
+
+**v2.0.0 Concept page support:** Concept encyclopedia pages now support name editing via Ctrl+N, in addition to Heroes, Clans, Kingdoms, and Settlements.
+
+```csharp
+var behavior = EncyclopediaEditBehavior.Instance;
+
+// ── Custom Names ────────────────────────────────────────────
+string customName = behavior.GetCustomName(objectId);     // Returns custom name or null
+bool hasName = behavior.HasCustomName(objectId);           // True if custom name exists
+var allNames = behavior.GetAllCustomNames();               // All custom names (for export)
+
+// ── Custom Banners ──────────────────────────────────────────
+string bannerCode = behavior.GetCustomBannerCode(objectId); // Serialized banner string or null
+bool hasBanner = behavior.HasCustomBanner(objectId);         // True if custom banner exists
+var allBanners = behavior.GetAllCustomBanners();             // All custom banners (for export)
+
+// ── Custom Timestamps ───────────────────────────────────────
+string editDate = behavior.GetTimestamp(objectId);            // "Day 15 of Spring, 1084" or null
+```
+
+### Info Stats Methods (v2.0.0+)
+
+Info stats are computed from live game state. Each method returns a `Dictionary<string, string>` of key-value pairs.
+
+```csharp
+/// <summary>
+/// Returns computed stats for a Hero: Culture, Occupation, Kingdom, Location,
+/// Status, Spouse, Troops, Morale, Companions, Towns, Castles, Garrisons,
+/// Workshops, Influence, Kills, Battles, Tournaments, Hall Rank.
+/// </summary>
+Dictionary<string, string> EditableEncyclopediaAPI.GetHeroInfoStats(Hero hero)
+Dictionary<string, string> EditableEncyclopediaAPI.GetHeroInfoStats(string heroId)
+
+/// <summary>
+/// Returns computed stats for a Clan: Kingdom, Leader, Culture, Renown,
+/// Influence, Troops, Parties, Lords, Companions, Towns, Castles, Villages.
+/// </summary>
+Dictionary<string, string> EditableEncyclopediaAPI.GetClanInfoStats(Clan clan)
+
+/// <summary>
+/// Returns computed stats for a Kingdom: Ruler, Culture, Clans, Lords, Towns,
+/// Castles, Villages, Total Troops, Total Garrisons, Active Wars, At War With.
+/// </summary>
+Dictionary<string, string> EditableEncyclopediaAPI.GetKingdomInfoStats(Kingdom kingdom)
+
+/// <summary>
+/// Returns computed stats for a Settlement: Owner, Clan, Kingdom, Culture,
+/// Prosperity, Loyalty, Security, Food, Garrison, Militia, Wall Level,
+/// Workshops, Governor, Bound Villages, Notables. Village-specific: Hearths, Bound To.
+/// </summary>
+Dictionary<string, string> EditableEncyclopediaAPI.GetSettlementInfoStats(Settlement settlement)
+Dictionary<string, string> EditableEncyclopediaAPI.GetSettlementInfoStats(string settlementId)
+```
+
+| Page Type | Stats Returned |
+|-----------|----------------|
+| **Hero** | Culture, Occupation, Kingdom, Location, Status, Spouse, Troops, Morale, Companions, Towns, Castles, Garrisons, Workshops, Influence, Battles (W/L), Kills (Heroes/Troops), Tournaments, Hall Rank |
+| **Clan** | Kingdom, Leader, Culture, Renown, Influence, Troops, Parties, Lords, Companions, Towns, Castles, Villages |
+| **Kingdom** | Ruler, Culture, Clans, Lords, Towns, Castles, Villages, Total Troops, Total Garrisons, Active Wars, At War With |
+| **Settlement** | Owner, Clan, Kingdom, Culture, Prosperity, Loyalty, Security, Food, Garrison, Militia, Wall Level, Workshops, Governor, Bound Villages, Notables |
+| **Concept** | (Description and name editing supported; no computed stats) |
+
+### Culture/Occupation Methods (v1.1.3+)
 
 ```csharp
 /// <summary>
@@ -492,6 +654,248 @@ int EditableEncyclopediaAPI.GetCustomOccupationCount()
 /// </summary>
 Dictionary<string, string> EditableEncyclopediaAPI.GetAllCustomCultures()
 Dictionary<string, string> EditableEncyclopediaAPI.GetAllCustomOccupations()
+```
+
+### Hero Lore Fields Methods (v2.0.0+)
+
+The Hero Lore System provides 7 editable fields per hero, stored as key-value pairs in the `_heroInfoFields` dictionary:
+
+| Field Key | Description | Display Location |
+|-----------|-------------|-----------------|
+| `description` | Main hero description | Description area (replaces native text) |
+| `backstory` | Origin story, birthplace, key life events | Lore section |
+| `personality` | Temperament, leadership style, fatal flaw | Lore section |
+| `goals` | Short-term objectives, long-term ambitions | Lore section |
+| `relationships` | Allies, rivals, family, enemies | Lore section |
+| `rumors` | Gossip, scandals, secrets | Lore section |
+| `chronicle` | Dated journal entries (auto-prepends game date) | Journal section |
+
+**Lore Story Templates** — Built-in writing prompts for 5 character roles help players craft structured lore:
+
+| Role | Backstory | Goals | Personality | Relationships | Rumors |
+|------|-----------|-------|-------------|---------------|--------|
+| **Lord** | Birthplace, noble house, lineage, first battle | Military conquest, political power, dynastic legacy | Temperament, honor code, fatal flaw | Liege, vassals, rivals, alliances | Court gossip, battlefield legends |
+| **Merchant** | Trade origins, specialty goods, trade routes | Market expansion, wealth accumulation | Negotiation style, risk tolerance | Partners, clients, rivals, informants | Shady deals, hidden wealth |
+| **Wanderer** | Why they left home, places traveled, skills | Personal quest, dream destination | Outlook on life, survival instinct | Companions, debts, old enemies | Mysterious past, secret abilities |
+| **Gang Leader** | Street origins, rise to power, territory | Expansion, rival elimination, rackets | Demeanor, fear vs loyalty, code | Lieutenants, enforcers, corrupt officials | Bodies, betrayals, hidden stash |
+| **Preacher** | Faith origins, teachings, followers | Spiritual mission, conversions | Piety, conviction, inner doubt | Flock, clergy, patrons, persecutors | Heresies, miracles, past sins |
+
+Templates use placeholder tokens (`{settlement}`, `{culture}`, `{name}`) that can be filled in by the player.
+
+```csharp
+/// <summary>
+/// Returns a hero's lore field value by field key and hero StringId.
+/// Field keys: "backstory", "personality", "goals", "relationships", "rumors", "chronicle"
+/// Returns null if no value set for that field.
+/// </summary>
+string EditableEncyclopediaAPI.GetHeroInfoField(string fieldKey, string heroId)
+
+/// <summary>
+/// Returns the total count of hero lore field entries across all heroes.
+/// </summary>
+int EditableEncyclopediaAPI.GetHeroInfoFieldCount()
+
+/// <summary>
+/// Returns all hero lore fields as a dictionary for export.
+/// Key format: "fieldKey_heroId" (e.g., "backstory_lord_1_1")
+/// </summary>
+Dictionary<string, string> EditableEncyclopediaAPI.GetAllHeroInfoFieldsForExport()
+
+/// <summary>
+/// Returns the comma-separated tag string for an entity, or null if no tags set.
+/// </summary>
+string EditableEncyclopediaAPI.GetTags(string objectId)
+
+/// <summary>
+/// Returns the count of entities with custom tags.
+/// </summary>
+int EditableEncyclopediaAPI.GetTagCount()
+
+/// Returns all unique tag names used across all entities.
+IEnumerable<string> EditableEncyclopediaAPI.GetAllUniqueTags()
+
+/// Returns all entity StringIds that have a specific tag.
+List<string> EditableEncyclopediaAPI.GetObjectsWithTag(string tag)
+
+/// Returns entity StringIds that have ANY of the given tags.
+List<string> EditableEncyclopediaAPI.GetObjectsWithAnyTag(IEnumerable<string> tags)
+
+/// Returns entity StringIds that have ALL of the given tags.
+List<string> EditableEncyclopediaAPI.GetObjectsWithAllTags(IEnumerable<string> tags)
+
+/// Returns usage count for each tag across all entities.
+Dictionary<string, int> EditableEncyclopediaAPI.GetTagUsageCounts()
+
+/// Renames a tag globally across all entities.
+void EditableEncyclopediaAPI.RenameTagGlobal(string oldTag, string newTag)
+
+/// Removes a tag globally from all entities.
+void EditableEncyclopediaAPI.RemoveTagGlobal(string tag)
+
+/// Merges source tag into target tag across all entities.
+void EditableEncyclopediaAPI.MergeTags(string sourceTag, string targetTag)
+```
+
+### Hero Lore Convenience Methods (v2.0.0+)
+
+```csharp
+/// <summary>
+/// Returns ALL lore fields for a hero as a dictionary (fieldKey -> text).
+/// Only includes fields that have been set. Keys: "backstory", "personality",
+/// "goals", "relationships", "rumors", "chronicle".
+/// </summary>
+Dictionary<string, string> EditableEncyclopediaAPI.GetAllHeroLoreFields(string heroId)
+
+/// <summary>
+/// Returns true if a hero has ANY lore field set.
+/// </summary>
+bool EditableEncyclopediaAPI.HasHeroLore(string heroId)
+```
+
+### Lore Story Templates API (v2.0.0+)
+
+The mod includes built-in writing prompts for 5 character roles. These can be accessed programmatically:
+
+```csharp
+/// <summary>
+/// Returns available character role names: "Lord", "Merchant", "Wanderer", "GangLeader", "Preacher".
+/// </summary>
+string[] EditableEncyclopediaAPI.GetAvailableRoles()
+
+/// <summary>
+/// Returns field keys that have templates: "backstory", "personality", "goals", "relationships", "rumors".
+/// </summary>
+string[] EditableEncyclopediaAPI.GetTemplateFieldKeys()
+
+/// <summary>
+/// Returns the resolved template for a hero — placeholders ({name}, {culture}, {settlement},
+/// {clan}, {faction}, {occupation}, {date}) are filled with the hero's actual values.
+/// Tries occupation-specific → culture-specific → default template.
+/// Returns null if no template exists.
+/// </summary>
+string EditableEncyclopediaAPI.GetLoreTemplate(string fieldKey, string heroId)
+
+/// <summary>
+/// Returns the raw (unresolved) template for a role and field.
+/// Example: GetRoleTemplate("Lord", "backstory") returns:
+/// "Born in: {settlement}\nNoble House: {clan}\nCulture: {culture}\nLineage: \n..."
+/// </summary>
+string EditableEncyclopediaAPI.GetRoleTemplate(string role, string fieldKey)
+
+/// <summary>
+/// Returns ALL templates for a role as a dictionary (fieldKey -> template text).
+/// Example: GetAllRoleTemplates("Merchant") returns 5 field templates.
+/// </summary>
+Dictionary<string, string> EditableEncyclopediaAPI.GetAllRoleTemplates(string role)
+```
+
+**Template Lookup Priority:**
+1. Occupation-specific: `template_backstory_Lord` (matches hero's occupation)
+2. Culture-specific: `template_backstory_sturgia` (matches hero's culture)
+3. Default: `template_backstory` (generic template)
+
+**Available Roles and Fields:**
+
+| Role | backstory | personality | goals | relationships | rumors |
+|------|-----------|-------------|-------|---------------|--------|
+| **Lord** | Birthplace, noble house, lineage, first battle | Temperament, leadership, honor code, fatal flaw | Military, political, dynastic, threats | Liege, vassals, court rivals, marriage alliances | Court gossip, battlefield legends, scandals |
+| **Merchant** | Trade origins, specialty goods, routes, rivals | Negotiation style, risk tolerance, ethics | Trade expansion, wealth, new markets | Partners, clients, rivals, informants | Shady deals, hidden wealth, smuggling |
+| **Wanderer** | Why they left, places traveled, skills | Outlook, survival instinct, trust issues | Current quest, dream, skills to master | Companions, debts, enemies, love interest | Mysterious past, strange abilities, bounty |
+| **GangLeader** | Street origins, rise to power, territory | Demeanor, fear vs loyalty, personal code | Territory expansion, rival gangs, rackets | Lieutenants, enforcers, corrupt officials | Bodies buried, betrayals, hidden stash |
+| **Preacher** | Faith origins, teachings, followers | Piety, conviction, tolerance, inner doubt | Spiritual mission, conversions, enemies | Flock, clergy, patrons, persecutors | Heresies, miracles, forbidden texts |
+
+**v2.0.0 Change: Role Templates Auto-Display**
+
+As of v2.0.0, when a hero has no custom lore saved for a field, the Lore section automatically displays the resolved role template as default content. This means `GetRoleTemplate()` output is now visible in the encyclopedia UI without the user clicking "+Add". The `ResolveFieldTemplate()` method (in `EncyclopediaEditPopup`) was changed from `private` to `internal` for this purpose.
+
+### Chronicle Methods (v2.0.0+)
+
+```csharp
+/// <summary>
+/// Returns the hero's Chronicle lore field (the auto-dated running journal).
+/// Returns null if no chronicle exists.
+/// </summary>
+string EditableEncyclopediaAPI.GetHeroChronicle(string heroId)
+
+/// <summary>
+/// Returns ALL chronicle/journal entries across all entities as a flat list.
+/// Each entry has EntityId, Date, and Text properties.
+/// This is the same data shown in the Global Chronicle Panel.
+/// </summary>
+List<ChronicleEntry> EditableEncyclopediaAPI.GetAllChronicleEntries()
+
+// ChronicleEntry class:
+// - EntityId (string) — the StringId of the source entity
+// - Date (string) — the in-game date string
+// - Text (string) — the entry text (may include [War], [Politics] etc.)
+```
+
+### Journal & Chronicle Methods (v2.0.0+)
+
+```csharp
+/// <summary>
+/// Returns the journal/chronicle entries for an entity as a raw string.
+/// Entries are newline-separated "date|text" format.
+/// Returns null if no journal entries exist.
+/// </summary>
+string EditableEncyclopediaAPI.GetJournalEntries(string objectId)
+
+/// <summary>
+/// Returns the total count of entities with journal entries.
+/// </summary>
+int EditableEncyclopediaAPI.GetJournalCount()
+
+/// <summary>
+/// Returns all journal entries as a dictionary for export.
+/// </summary>
+Dictionary<string, string> EditableEncyclopediaAPI.GetAllJournalForExport()
+```
+
+### Relation Notes & History Methods (v2.0.0+)
+
+```csharp
+/// <summary>
+/// Returns the relation note between two heroes.
+/// Key format: "viewingHeroId_targetHeroId"
+/// Returns null if no note exists.
+/// </summary>
+string EditableEncyclopediaAPI.GetRelationNote(string viewingHeroId, string targetHeroId)
+
+/// <summary>
+/// Returns all relation notes as a dictionary for export.
+/// </summary>
+Dictionary<string, string> EditableEncyclopediaAPI.GetAllRelationNotesForExport()
+
+/// <summary>
+/// Returns all relation history entries as a dictionary.
+/// Key format: "heroId_targetHeroId", Value: newline-separated "date|change|description"
+/// </summary>
+Dictionary<string, string> EditableEncyclopediaAPI.GetRelationHistory()
+
+/// <summary>
+/// Returns relation history for a specific hero (all their relationships).
+/// </summary>
+Dictionary<string, string> EditableEncyclopediaAPI.GetRelationHistoryForHero(string heroId)
+```
+
+### Timeline Methods (v2.0.0+)
+
+```csharp
+/// <summary>
+/// Returns timeline entries for a hero — personal events where they participated.
+/// Includes battles, captures, sieges, raids, kills, family events, clan changes, tournaments.
+/// Uses TimelineDataCollector to filter world events to hero-specific ones.
+/// </summary>
+List<TimelineEntry> EditableEncyclopediaAPI.GetHeroTimeline(string heroId)
+```
+
+### Import with Detailed Results (v2.0.0+)
+
+```csharp
+/// <summary>
+/// Imports from shared JSON file and returns detailed results per data section.
+/// </summary>
+ImportResult EditableEncyclopediaAPI.ImportFromSharedFileDetailed()
 ```
 
 ---
@@ -867,6 +1271,71 @@ This ensures:
 - For JSON method: Instruct player to re-export after making changes
 - For DLL method: Use the `OnDescriptionChanged` event for real-time updates, or query in real-time
 - Consider implementing periodic refresh logic
+
+### Debug logging (v2.0.0+)
+
+All exceptions are now logged to `Logs/debug.log` with class name and context. Enable debug mode in MCM to also see messages on-screen. If your mod integrates with the API and encounters unexpected behavior, check the debug log first — it will contain detailed error messages including the originating class and method.
+
+### Reflection failures (v2.0.0+)
+
+If a game update breaks reflection, the debug log will show which property/field could not be found (e.g., `"Patches: Culture field not found via reflection"`). This typically means a Bannerlord update changed internal class layouts. Check for an updated version of Editable Encyclopedia, or report the issue on GitHub.
+
+---
+
+## v2.0.0 API Improvements
+
+### Error Handling
+
+All API methods now log errors via `MCMSettings.DebugLog()` instead of silently swallowing exceptions. If your mod calls the API and something goes wrong, check `Logs/debug.log` in the mod's config folder.
+
+### SafeGet Pattern
+
+Bulk info stat methods (`GetHeroInfoStats`, `GetClanInfoStats`, `GetKingdomInfoStats`, `GetSettlementInfoStats`) now use a `SafeGet()` helper that:
+- Returns the stat value if available
+- Returns a fallback (`"Unknown"` or `"0"`) on null/error
+- Logs the failure for debugging
+
+This means callers no longer need to worry about null values in stat dictionaries — every expected key will be present.
+
+### EditPopupInjector Custom Parameters (v2.0.0)
+
+`EditPopupInjector` now supports 3 optional parameters for mod integration, enabling other mods to customize the edit popup behavior when invoking it programmatically:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `description` | `string` | (same as input) | Separate preview text from the input text — allows showing context (e.g., "Native Name: Skorin") while the input field remains empty |
+| `confirmText` | `string` | `"Done"` | Custom confirm button text (e.g., "Next (Edit Title)" for hero name flow) |
+| `tipText` | `string` | (from `edit_tips` localization) | Custom tip text overriding the default editing tips hint |
+
+Additionally, `EncyclopediaEditPopup` exposes a `PendingCustomTipText` field for deferred tip injection when the popup widget tree is built asynchronously. `ShowNativeTextInquiry` was changed from `private` to `internal` for cross-class fallback access.
+
+New localization keys for name/title editing:
+- `edit_tips_name` — "Enter a new name below. Max {0} characters. Leave empty to reset to native name."
+- `edit_tips_title` — "Enter a new title below. Max {0} characters. Leave empty to reset to native title."
+- `timeline_no_events` — Empty timeline message for hero pages with no events
+
+### Name Validation
+
+Names set via the mod's Ctrl+N popup are now sanitized:
+- Control characters (newlines, tabs, etc.) stripped
+- Max length enforced (configurable via MCM, default 100)
+- User warned if characters were removed
+
+### New Entity Support
+
+Concept encyclopedia pages now support name editing via Ctrl+N. This brings the total supported entity types to 5: Heroes, Clans, Kingdoms, Settlements, and Concepts.
+
+---
+
+## v2.0.0 Integration Notes (Layer Detection & Role Templates)
+
+### API Changes
+- `EncyclopediaEditPopup.ResolveFieldTemplate(string fieldKey, string heroId)` — Changed from `private` to `internal`. Returns the resolved template string with all placeholders filled in, or null if no template exists. Used internally by `LoreSectionInjector` to display role templates as default lore content.
+
+### Behavioral Changes
+- **Lore section now shows role templates by default** — When no custom lore is saved for a hero, the Lore section displays resolved occupation/culture/default templates. This means the "+Backstory", "+Personality" etc. buttons are replaced by actual template content for heroes with matching roles (Lord, Merchant, Wanderer, GangLeader, Preacher).
+- **Encyclopedia layer detection is stricter** — All injectors now require `EncyclopediaDividerButtonWidget` in candidate layers. If your mod adds custom encyclopedia-like pages, ensure they include this widget type or the injectors won't target them.
+- **Deferred retry on non-map screens** — Widget injection on Clan/Party/Inventory screens is deferred by ~200ms to wait for the encyclopedia overlay layer. If your mod hooks into the same Postfix, be aware that injection may happen asynchronously.
 
 ---
 
