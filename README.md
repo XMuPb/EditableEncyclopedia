@@ -1421,7 +1421,7 @@ The mod now fully supports the **Naval DLC** (War Sail mode), which replaces the
 
 # Full Game Compatibility
 
-**It fully supports both game** `versions 1.2 and 1.3, and works seamlessly whether you are playing with or without DLC` (including Naval DLC / War Sail mode). Every patch has been tested and refined to maintain performance and stability, so you can enjoy a consistent gameplay experience regardless of your setup.
+**It fully supports both game** `versions1.3, and works seamlessly whether you are playing with or without DLC` (including Naval DLC / War Sail mode). Every patch has been tested and refined to maintain performance and stability, so you can enjoy a consistent gameplay experience regardless of your setup.
 
 
 ### v1.1.4
