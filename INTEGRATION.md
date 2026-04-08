@@ -1349,6 +1349,40 @@ If you have questions about integrating with Editable Encyclopedia, or encounter
 
 ---
 
+## v2.3.0 API Changes
+
+### Culture Behavior Change
+
+**Breaking change for mods that read `hero.Culture`:** Starting in v2.3.0, `ApplyCulture()` now **actually changes** `hero.Culture` and `hero.CharacterObject.Culture` via reflection when a player changes their culture using Ctrl+U. Previously, the culture was only stored in the behavior dictionary and displayed via Stats panel overrides — `hero.Culture` was never modified.
+
+**What this means for integrators:**
+- `hero.Culture` now returns the custom culture object at runtime (e.g., `battania` instead of `aserai`)
+- The `SaveSanitizerPatch` restores original cultures before game save, so save files are not affected
+- If your mod reads `hero.Culture` during gameplay, you'll get the custom value
+- If your mod reads culture from save file data, you'll get the original value
+
+**Safe way to get the "true" culture:**
+```csharp
+// Get the custom culture if set, otherwise the original
+string cultureId = EditableEncyclopediaAPI.GetHeroCulture(heroId);
+if (string.IsNullOrEmpty(cultureId))
+    cultureId = hero.Culture?.StringId;
+```
+
+### Settlement Culture Propagation
+
+When a hero's culture is changed and they are a clan leader, all owned settlements now have their `settlement.Culture` updated at runtime. This is also restored before save by the `SaveSanitizerPatch`.
+
+### New Validation on Culture Assignment
+
+`SetCustomCulture()` now validates that the culture ID exists in the game's `MBObjectManager` before persisting. Invalid culture IDs are still saved (for flexibility with custom culture definitions) but a warning is logged. On save load, `ValidateCustomCulturesOnLoad()` scans all entries and removes references to cultures that no longer exist — preventing crashes from orphaned references.
+
+### Party Name Update
+
+`SetHeroName()` now also updates `PartyBase.<CustomName>` and calls `PartyBase.SetVisualAsDirty()` — the party tooltip and campaign map nameplate now reflect the custom name immediately.
+
+---
+
 ## License
 
 This integration guide is part of the Editable Encyclopedia project, licensed under the [MIT License](https://opensource.org/licenses/MIT).
