@@ -1,719 +1,224 @@
-<div align="center">
-<img src="https://i.imgur.com/M7iApFw.png" alt="Editable Encyclopedia Overview">
-<!-- Replace with an actual banner image when available -->
-<!-- <img src="assets/banner.png" alt="Editable Encyclopedia Banner" width="800"> -->
-
 # Editable Encyclopedia
 
-**Custom lore & descriptions for Mount & Blade II: Bannerlord**
+A Mount & Blade II: Bannerlord singleplayer mod that lets you rewrite the encyclopedia. Open any Hero, Clan, Kingdom, or Settlement page, hit a `Ctrl+<key>` shortcut, and edit it: the description, the name and title, the banner, a hero's culture or occupation, tags, lore fields, journal notes, hero-to-hero relation notes, and a personal timeline. Everything you write is saved in the campaign file and survives save/load.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Game](https://img.shields.io/badge/Mount%20%26%20Blade%20II-Bannerlord-blue)](https://www.taleworlds.com/en/Games/Bannerlord)
-[![Discord](https://img.shields.io/discord/1234567890?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.com/users/404393620897136640)
+It also keeps a running chronicle on its own. The auto-journal watches campaign events (battles, sieges, deaths, diplomacy, marriages, births, tournaments and more) and logs them as dated, colour-tagged notes on the entities involved. There's a campaign-map panel that aggregates all of that into one filterable history.
 
-</div>
+No config files to touch. Everything is driven by hotkeys on encyclopedia pages, with the rest exposed through MCM.
 
-A **Mount & Blade II: Bannerlord** mod that allows you to edit encyclopedia page descriptions for Heroes, Clans, Kingdoms, and Settlements. Create your own lore, write custom character backgrounds, or document your campaign story directly in the encyclopedia!
+## The basics
 
----
+- **Module Id:** `EditableEncyclopedia`
+- **Display name:** Editable Encyclopedia
+- **Version:** v2.5.2
+- **Type:** Singleplayer only (`SingleplayerModule=true`, `MultiplayerModule=false`, `Official=false`)
+- **Target:** .NET Framework 4.7.2 / C# 9.0, x64. Tested on Bannerlord 1.3.13 and newer, including v1.4.5 (War Sails).
+- **Entry point:** `EditableEncyclopedia.SubModuleClassEntry` in `EditableEncyclopedia.dll`
+- **License:** Open source, credit the original author (XMuPb). (Earlier releases shipped under MIT; the change is recorded in the CHANGELOG.)
 
-## Table of Contents
+### Load order
 
-- [Quick Start (QUICKSTART.md)](QUICKSTART.md)
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Lore Story Templates](#lore-story-templates)
-- [Configuration (MCM Settings)](#configuration-mcm-settings)
-- [Technical Details (API)](#technical-details-for-developers)
-- [Troubleshooting](#troubleshooting)
-- [Discord & Support](#discord--support)
-- [License](#license)
-- [Credits](#credits)
-- [NavalDLC Compatibility](#navaldlc-compatibility)
-- [Changelog](#changelog)
+`DependedModules` in `SubModule.xml`, in order. Note that **EE-Core is now the first dependency** — it's a custom module and it's declared before the game's own `Native`.
 
----
+1. `EE-Core`
+2. `Native` (e1.0.0)
+3. `SandBoxCore` (e1.0.0)
+4. `Sandbox` (e1.0.0)
+5. `StoryMode` (e1.0.0)
+6. `Bannerlord.Harmony` (v2.4.2.225+)
+7. `Bannerlord.ButterLib`
+8. `Bannerlord.UIExtenderEx`
+9. `Bannerlord.MBOptionScreen` (v5.0.0) — this is MCM v5; it's declared by its module Id, not `Bannerlord.MCMv5`
 
-## Features
+All nine are non-optional. In the launcher, enable Editable Encyclopedia after Harmony, ButterLib, UIExtenderEx, and MCM. Then start or load a campaign. Default key to open the encyclopedia is `N`.
 
-### Core Editing
-- **Edit Encyclopedia Descriptions** — Press `Ctrl+E` on any encyclopedia page to open a text editor and write your own custom description
-- **Edit Hero Names/Titles (Ctrl+N)** — Change any hero's display name and title directly from the encyclopedia using the same EditPopupInjector as Ctrl+E (with portrait display, character counter, and proper layout). Also works on Clans, Kingdoms, Settlements, and Concepts. Features name validation (max length configurable via MCM, default 100), control character filtering, character count enforcement shown in popup, and original name display in popup description (leave empty to reset). Custom button text: Hero name shows "Next (Edit Title)", others show "Done". Custom tip text: "Enter a new name below. Max 100 characters. Leave empty to reset to native name." Preview shows "Native Name: Skorin" / "Native Title: Lord". Falls back to native TextInquiry if custom popup fails
-- **Edit Banners/Flags (Ctrl+B)** — Paste a banner code to change the banner for Heroes, Clans, Kingdoms, or Settlements
-- **Edit Hero Culture (Ctrl+U)** — Change any hero's culture using a clickable carousel — no typing needed. Supports creating custom cultures with troop tree assignments
-- **Edit Hero Occupation (Ctrl+O)** — Change any hero's occupation with friendly display names (e.g., "Gang Leader" instead of "GangLeader")
-- **Reset to Default (Ctrl+R)** — Restore the original game description for any page (with confirmation dialog)
-- **Undo Last Edit (Ctrl+Z)** — Instantly revert your most recent edit or reset (one level of undo)
+## What it does
 
-### Hero Lore System
-- **Hero Lore Fields (Ctrl+E on Heroes)** — Press `Ctrl+E` on a hero page to open a field picker with 7 editable fields: Description, Backstory, Personality, Goals, Relationships, Rumors, and Chronicle. The 5 narrative fields (Backstory, Personality, Goals, Relationships, Rumors) are displayed in a dedicated "Lore" section; Description and Chronicle are handled separately
-- **Lore Story Templates** — Built-in writing prompts for 5 character roles (Lord, Merchant, Wanderer, Gang Leader, Preacher) with structured sections for Backstory, Goals, Personality, Relationships, and Rumors — helping you craft rich character lore with consistent structure
-- **Custom Lore Editor** — A dedicated Gauntlet popup editor with multiline support, character counter, and proper layout (falls back to native dialog gracefully)
-- **Lore Section Widget Injection** — Hero lore fields are injected as a dedicated section in the encyclopedia page widget tree with left-aligned text and proper styling
+Open the encyclopedia (`N`), go to a page, and use a shortcut. The poller only acts when a real encyclopedia object is being tracked, so the keys do nothing on the campaign map proper.
 
-### Chronicle & Journal
-- **Chronicle with Auto-Dating** — The Chronicle field auto-prepends the in-game date to each new entry, creating a running journal for any character
-- **Auto-Chronicle System** — Automatically logs 16+ game event types (battles, sieges, deaths, captures, diplomacy, marriages, births, tournaments, etc.) as dated chronicle notes with colored category tags: `[War]` (red), `[Politics]` (blue), `[Crime]` (orange), `[Family]` (green). Anti-spam deduplication prevents duplicate entries within the same game day
-- **Journal Section** — Collapsible journal section on encyclopedia pages with pagination (10 entries per page with Prev/Next), category filter toggles, and colored hero/settlement names (golden for heroes, cyan for settlements)
-- **Manual Chronicle Notes (Ctrl+J)** — Add, delete, or clear chronicle notes manually on any encyclopedia page with auto-dated in-game timestamps
-- **Global Chronicle Panel** — A campaign map overlay that displays all world history events. A "Chronicle Notes" button on the campaign map HUD opens a full panel with aggregated chronicle notes from all kingdoms, clans, settlements, and heroes. Features animated slide-up panel, pagination, category filters (War/Politics/Crime/Family/Other), source-type filters (Kingdom/Clan/Settlement/Hero), colored clickable entity names, and Escape/click-outside dismissal
+| Shortcut | Action                                          | Page types                                     |
+| -------- | ----------------------------------------------- | ---------------------------------------------- |
+| `Ctrl+E` | Edit description, or open the hero field picker | Heroes, Clans, Kingdoms, Settlements           |
+| `Ctrl+N` | Edit name / title                               | Heroes, Clans, Kingdoms, Settlements, Concepts |
+| `Ctrl+B` | Edit banner / flag (paste a banner code)        | Heroes, Clans, Kingdoms, Settlements           |
+| `Ctrl+U` | Change culture (clickable carousel)             | Heroes                                         |
+| `Ctrl+O` | Change occupation (friendly names)              | Heroes                                         |
+| `Ctrl+G` | Add / remove tags                               | All                                            |
+| `Ctrl+J` | Add a chronicle note (auto-dated)               | All                                            |
+| `Ctrl+F` | Write / edit a hero relation note               | Heroes                                         |
+| `Ctrl+R` | Reset to the original description               | All                                            |
+| `Ctrl+Z` | Undo the last change                            | All                                            |
 
-### Relation Notes & Timeline
-- **Hero Relation Notes (Ctrl+F)** — Write personal notes about hero relationships. Press `Ctrl+F` on a hero page to search for another hero and write a note about their relationship. Also works via Ctrl+Click on hero portrait links in Friends/Enemies sections
-- **Relation Notes Section** — A collapsible "Relation Notes" section injected into hero encyclopedia pages showing all heroes with notes for the currently viewed hero, with clickable hero names, edit-on-click, delete button, relation score display, and persistent collapse state
-- **Hero Timeline Section** — A collapsible "Timeline" section on hero pages, always visible even with 0 events. Shows the hero's personal biography — only events where they personally participated (battles, sieges, raids, captures, kills, family events, clan changes, tournaments). When empty, displays "No events recorded yet. Events appear as this hero participates in battles, sieges, captures, and other activities." World-level events are excluded (those appear in Chronicle). `IsTimelineWorthy()` now includes ALL [War] and [Politics] entries from the hero's own journal. Timeline data comes from 3 sources: hero's own journal, cross-referenced journals, native game log
-- **Relation History Tracking** — Automatic tracking of relation score changes between heroes with dated history entries
+`Ctrl+N` on a hero is a two-step flow: name first (the button reads "Next (Edit Title)"), then title. On other entity types it's one step ("Done"). Names are sanitised (control characters stripped, length capped, default 100), and the original is shown in the popup so you can blank the field to reset. If the custom Gauntlet popup fails to build, it falls back to the engine's native text inquiry.
+
+What's editable per page type:
+
+- **Heroes** — description, 7 lore fields, name, title, banner, culture, occupation, tags, journal, relation notes, timeline
+- **Clans** — description, name, banner, tags, journal
+- **Kingdoms** — description, name, banner, tags, journal
+- **Settlements** — description, name, banner, tags, journal
+- **Concepts** — name only
+
+### Hero lore fields and templates
+
+`Ctrl+E` on a hero opens a field picker with seven fields: Description, Backstory, Personality, Goals, Relationships, Rumors, and Chronicle. The five narrative ones render in a dedicated "Lore" section, left-aligned. Description is the main encyclopedia text. Chronicle is a running journal that auto-stamps the in-game date on every entry.
+
+Each field ships with writing prompts for five character roles: Lord, Merchant, Wanderer, Gang Leader, Preacher. The templates carry placeholders (`{name}`, `{culture}`, `{settlement}`, `{clan}`, `{faction}`, `{occupation}`, `{date}`) that get filled from the hero. When a lore field is empty, the matching role template shows as the default content.
+
+### Auto-chronicle
+
+The auto-journal subscribes to 16+ campaign event types and writes dated notes onto the entities involved. Entries carry a coloured category tag: `[War]` (red), `[Politics]` (blue), `[Crime]` (orange), `[Family]` (green). Deduplication stops the same event being logged twice in one game day, and each entity is trimmed to a cap of 30 entries.
+
+The auto-journal subscribers are gated on the `EE-ChronicleNoters` peer module via `PeerRegistry`. With it disabled, no new chronicle entries are created, but existing `_journalEntries` data still saves and loads. Auto-tags and custom-culture reapply run regardless.
+
+### Journal, global chronicle, relation notes, timeline
+
+- **Journal section** — collapsible, paginated (default 10 per page, configurable), with category filter toggles. Hero names render gold, settlement names cyan.
+- **Global Chronicle Panel** — a "Chronicle Notes" button sits bottom-right on the campaign-map HUD. It opens a slide-up overlay aggregating chronicle notes across all kingdoms, clans, settlements, and heroes, with category filters (War / Politics / Crime / Family / Other), source-type filters (Kingdom / Clan / Settlement / Hero), pagination, and clickable entity names that jump you to the page. Navigation goes through `entity.EncyclopediaLink`, which works even under War Sails where some page handlers are missing.
+- **Relation Notes section** — a collapsible "Relation Notes" block on a hero page lists every hero with a note about the one you're viewing. Click to edit, with a delete button and the current relation score shown. Relation score changes are also tracked automatically with dated history entries.
+- **Timeline section** — a collapsible "Timeline" on hero pages, always visible even at zero events ("No events recorded yet…"). It's the hero's personal biography: only events they took part in (battles, sieges, raids, captures, kills, family events, clan changes, tournaments). World-level events stay in the Chronicle. Data is pulled from three sources: the hero's own journal, cross-referenced journals, and the native game log.
 
 ### Tags
-- **Tag System (Ctrl+G)** — Add player-defined tags (e.g., "ally", "enemy", "target") to any encyclopedia entry — heroes, clans, kingdoms, settlements. Tags display on the page with page-type-aware placement and are included in exports
-- **Auto-Tags** — Automatically generate tags for heroes based on game state. Auto-tags include "Auto: Friend" / "Auto: Enemy" (relation-based), "Auto: Dangerous" (large party), "Auto: Prisoner" (currently captured). Auto-tags are displayed with dimmed styling (75% opacity, 85% font scale) to distinguish from manual tags. Configurable thresholds via MCM settings
-- **Tag Font Scale** — Configurable tag display size (50%–300%) via MCM settings
-
-### Data Management
-- **Export / Import** — Export all custom data (descriptions, names, titles, banners, cultures, occupations, lore fields, tags, journal entries, relation notes, tag notes, relation note tags) to a JSON file (v11 format, 19 data sections) and import into other campaigns via MCM
-- **Export by Type** — Export only Heroes, Clans, Kingdoms, Settlements, or Banners separately
-- **Auto-Export on Save** — Optionally keep the JSON export file always up-to-date for other mods
-- **Auto-Import on Load** — Optionally import data from the JSON file when loading a save
-- **Reset All Descriptions** — Clear all custom descriptions at once from MCM (with confirmation)
-
-### UI & Display
-- **Edit Timestamp** — Optionally show the in-game date when a description was last edited
-- **Visual Indicator** — Optionally show `[Edited]` prefix on customized pages for easy identification
-- **Description Statistics** — MCM popup showing breakdown of all custom edits: descriptions, names, titles, banners, cultures, occupations, lore fields, tags, journal entries
-- **Navigation Guard** — Encyclopedia navigation is blocked while an edit popup is open, preventing accidental data loss
-- **Input Blocker** — A transparent layer absorbs input while edit popups are open, with force-encyclopedia-open protection
-
-### Persistence & Storage
-- **Persistent Storage** — All custom data is saved in your campaign save file via 18 SaveableField dictionaries
-- **Multiple Page Types Supported:**
-  - Heroes — descriptions, lore fields (7 fields), names, titles, banners, cultures, occupations, tags, journal, relation notes, timeline
-  - Clans — descriptions, names, banners, tags, journal
-  - Kingdoms — descriptions, names, banners, tags, journal
-  - Settlements — descriptions, names, banners, tags, journal
-  - Concepts — names
-
-### Configuration & Localization
-- **Localization** — Full multi-language support with 12 built-in languages (English, Turkish, German, French, Spanish, Chinese, Russian, Portuguese, Korean, Japanese, Polish, Ukrainian)
-- **Flexible MCM Settings** — 71 configuration options via the MCM v5 settings menu organized in 8 groups (14 Enable toggles, 8 Show toggles, 19 Action buttons, and more)
-- **Character Limit** — Configurable max character limits for descriptions, narrative fields, and stats fields (default 5000 each)
-- **Debug Log File** — Debug output written to a log file with automatic 5MB rotation, with optional on-screen display
-
-### NavalDLC / War Sail Compatibility
-- **Full Naval DLC Support** — All features work seamlessly with the Naval DLC (War Sail mode), which replaces the encyclopedia initialization
-- **Auto-Fix Missing Page Types** — Automatically detects and restores missing encyclopedia page handlers (Clan, ListPage, Home) removed by NavalDLC
-- **Chronicle Panel Navigation** — Navigate from the Chronicle Panel directly to any Clan/Hero/Settlement page, even on NavalDLC where encyclopedia page registration is different
-- **Safe Error Recovery** — Harmony finalizers on `SetEncyclopediaPage`, `ExecuteLink`, and `OnTick` prevent crashes from missing page types
-
-### Developer Features
-- **Cross-Mod API** — Other mods can read cultures, occupations, descriptions, lore fields, tags, banners, journal entries, relation notes, and subscribe to changes
-- **Dynamic Occupation Discovery** — Automatically discovers all occupation types at runtime, including those added by other mods
-- **Prevent Kingdom Color Overwrites** — Re-applies your custom banners when the game forces them back to default colors
-
----
-
-## Requirements
-
-| Dependency | Required? | Notes |
-|---|---|---|
-| **Mount & Blade II: Bannerlord** | Yes | Tested on v1.3.13 and Newer Versions |
-| **Harmony** | Yes | Usually bundled with Bannerlord |
-| **ButterLib** | Yes | Required dependency |
-| **UIExtenderEx** | Yes | Required for settlement nameplate refresh |
-| **[MCM v5](https://www.nexusmods.com/mountandblade2bannerlord/mods/612)** (Mod Configuration Menu) | Yes | Required dependency — provides the full settings panel with 71 configuration options |
-
----
-
-## Installation
-
-### Manual Installation
-
-1. Download the [latest release](https://github.com/XMuPb/EditableEncyclopedia/releases)
-2. Extract the `EditableEncyclopedia` folder
-3. Copy it to your Bannerlord modules folder:
-   ```
-   \Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\
-   ```
-4. Launch the Bannerlord launcher
-5. Enable **"Editable Encyclopedia"** in the mods list
-6. Make sure it loads **after** Harmony, ButterLib, UIExtenderEx, and MCM (if installed)
-7. Start or load a **Campaign / Sandbox**
-
----
-
-## Usage
-
-### Keyboard Shortcuts
-
-| Shortcut | Action | Page Types |
-|---|---|---|
-| **Ctrl+E** | Edit description (heroes show a field picker: Description, Backstory, Personality, Goals, Relationships, Rumors, Chronicle) | Heroes, Clans, Kingdoms, Settlements |
-| **Ctrl+N** | Edit name/title | Heroes, Clans, Kingdoms, Settlements, Concepts |
-| **Ctrl+B** | Edit banner/flag code | Heroes, Clans, Kingdoms, Settlements |
-| **Ctrl+U** | Change culture | Heroes |
-| **Ctrl+O** | Change occupation | Heroes |
-| **Ctrl+G** | Add/remove tags | All |
-| **Ctrl+J** | Add a chronicle note (with auto-dated in-game timestamp) | All |
-| **Ctrl+F** | Add/edit hero relation note | Heroes |
-| **Ctrl+R** | Reset to default description | All |
-| **Ctrl+Z** | Undo last change | All |
-
-### Editing Descriptions
-
-1. Open the Encyclopedia in-game (default key: `N`)
-2. Navigate to any **Hero**, **Clan**, **Kingdom**, or **Settlement** page
-3. Press `Ctrl+E` to open the edit dialog
-4. For heroes, a field picker appears — choose Description, Backstory, Personality, Goals, Relationships, Rumors, or Chronicle
-5. Type your custom text
-6. Click **Save** to apply, or **Cancel** to discard changes
-
-### Hero Relation Notes
 
-1. Navigate to a Hero encyclopedia page
-2. Press `Ctrl+F` — a search dialog appears
-3. Type the name of another hero to search for
-4. Write your note about the relationship
-5. Notes appear in the "Relation Notes" section on the hero page
+`Ctrl+G` puts player-defined tags (`ally`, `enemy`, `target`, whatever) on any entity. Placement is page-type-aware (left panel for Kingdom/Clan, after the anchor for Settlement/Hero) and tags are included in exports. Display size is configurable from 50% to 300% (default 130%).
 
-### Global Chronicle Panel
+Auto-tags are generated from live game state and shown dimmed (75% opacity, 85% font scale) to set them apart from manual ones: `Auto: Friend` / `Auto: Enemy` (relation thresholds), `Auto: Dangerous` (large party), `Auto: Prisoner`, `Auto: Rich`, `Auto: At War`, `Auto: Ruler`, and others, plus settlement tags like `Auto: Nearby` and `Auto: Under Siege`. Thresholds are configurable globally and per-hero. Auto-tags are runtime-only and never saved.
 
-1. Look for the "Chronicle Notes" button on the bottom-right of the campaign map HUD
-2. Click it to open the panel showing all world history events
-3. Use category filters (War/Politics/Crime/Family) and source filters (Kingdom/Clan/Settlement/Hero) to narrow results
-4. Navigate pages with Prev/Next buttons
-5. Press Escape or click outside to close
+### Cultures and occupations
 
-### Lore Story Templates
+`Ctrl+U` swaps a hero's culture through a carousel (no typing) and can create a brand-new custom culture with a display name, a base culture, and a troop tree cloned from that base. Changing a culture actually writes `hero.Culture` and `hero.CharacterObject.Culture` and propagates to settlements owned by clan-leader heroes. Custom cultures register as real `CultureObject` instances with the engine. Because the serializer can't write references to a culture that doesn't exist at load, a save sanitizer swaps custom settlement cultures back to vanilla just before save and restores them after; the assignment itself survives in the save dictionaries.
 
-The mod includes built-in writing prompts for **5 character roles** to help you craft rich, structured lore:
+`Ctrl+O` changes occupation with friendly names ("Gang Leader" instead of "GangLeader"). Occupation types are discovered at runtime, so types added by other mods show up too.
 
-| Role | Description |
-|---|---|
-| **Lord** | Nobility — lineage, first battles, vassals, court rivalries, political ambitions |
-| **Merchant** | Trade — specialty goods, trade routes, business rivals, shady deals |
-| **Wanderer** | Adventurer — why they left home, places traveled, skills acquired, mysterious past |
-| **Gang Leader** | Underworld — street origins, territory, enforcers, protection rackets |
-| **Preacher** | Faith — spiritual mission, followers, conflicts with authority, heretical beliefs |
+Both have manager dialogs in MCM to view and delete assignments and restore the originals.
 
-Each role provides structured prompts across all 5 narrative fields:
+### Undo, reset, import/export
 
-- **Backstory** — Origins, birthplace (`{settlement}`), culture (`{culture}`), key life events
-- **Goals** — Short-term objectives, long-term ambitions, threats to counter
-- **Personality** — Temperament, leadership style, fatal flaw, inner doubt
-- **Relationships** — Allies, rivals, family, enemies, love interests
-- **Rumors** — Gossip, legends, scandals, secrets
+Undo is a 10-level stack (it was single-level in early versions) and works for edits and resets alike. Reset takes you back to the original game description with a confirmation. "Reset All Descriptions" from MCM wipes every custom description in the current campaign, with a confirmation, and can't be undone.
 
-Use these as inspiration when editing hero lore fields via `Ctrl+E` — fill in the prompts to create consistent, immersive character backgrounds.
-
-### Resetting to Default
-
-1. Navigate to an encyclopedia page that has a custom description
-   - The hint will show `[Ctrl+E to Edit | Ctrl+R to Reset]`
-2. Press `Ctrl+R`
-3. Confirm the reset in the dialog
-4. The original game description is restored immediately
-
-### Undo Last Change
-
-1. After editing or resetting a description, the hint will show `Ctrl+Z to Undo`
-2. Press `Ctrl+Z` to revert your most recent change
-3. Works for both edits and resets (one level of undo)
-
-### Export & Import
-
-#### Export
-
-1. Open MCM settings (**Options -> Mod Options**)
-2. Navigate to **"Editable Encyclopedia" -> "4. Export"**
-3. Click the **Export** button
-4. Your descriptions are saved to:
-   ```
-   Documents\Mount and Blade II Bannerlord\Configs\ModSettings\Global\EditableEncyclopedia\descriptions_export.json
-   ```
-
-#### Import
-
-1. Place a valid `descriptions_export.json` file in the location above
-2. Open MCM settings
-3. Navigate to **"Editable Encyclopedia" -> "5. Import"**
-4. Click the **Import** button
-5. All imported descriptions are merged with your current descriptions (existing entries are overwritten)
-
----
-
-## Configuration (MCM Settings)
-
-If you have MCM v5 installed, you can configure the mod via **Options -> Mod Options -> Editable Encyclopedia**.
-
-### 1. Info/About
-
-| Setting | Description |
-|---|---|
-| **Author** | Displays the mod author (XMuPb) |
-| **Version** | Current mod version (v2.3.0) |
-| **Join Discord** | Opens the Discord invite link in your browser |
-| **Encyclopedia Edit Statistics** | Shows a popup with total descriptions, breakdown by type, names, titles, banners, cultures, occupations, lore fields, tags |
-| **Open Config Folder** | Opens the folder containing MCM settings and export files |
-
-### 2. General
-
-#### Hints
-
-| Setting | Default | Description |
-|---|---|---|
-| **Show Edit Hint** | `true` | Append `[Ctrl+E to Edit Description]` to encyclopedia pages |
-| **Show Name Edit Hint** | `true` | Show `[Ctrl+N to Edit Name]` hint on encyclopedia pages |
-| **Show Banner Edit Hint** | `true` | Show `[Ctrl+B to Edit Banner]` hint on encyclopedia pages |
-| **Show Culture Edit Hint** | `true` | Show `[Ctrl+U to Edit Culture]` hint on hero pages |
-| **Show Occupation Edit Hint** | `true` | Show `[Ctrl+O to Edit Occupation]` hint on hero pages |
-| **Show Tag Edit Hint** | `true` | Show `[Ctrl+G to Edit Tags]` hint on encyclopedia pages |
-| **Show Journal Hint** | `true` | Show `[J Journal]` in the keyboard shortcut hint |
-| **Show Relation Note Hint** | `true` | Show `[F Friend Note]` in the keyboard shortcut hint on hero pages |
-
-#### Display
-
-| Setting | Default | Description |
-|---|---|---|
-| **Show Confirmation Messages** | `true` | Display green success messages when saving descriptions |
-| **Show Edited Indicator** | `false` | Prepend `[Edited]` to customized descriptions for easy identification |
-| **Show Edit Timestamp** | `true` | Display the in-game date when a description was last edited (e.g., "Edited: Day 15 of Spring, 1084") |
-
-### 3. Editing
-
-#### Pages
-
-| Setting | Default | Description |
-|---|---|---|
-| **Enable Hero Editing** | `true` | Allow editing descriptions on Hero encyclopedia pages |
-| **Enable Clan Editing** | `true` | Allow editing descriptions on Clan encyclopedia pages |
-| **Enable Kingdom Editing** | `true` | Allow editing descriptions on Kingdom/Faction pages |
-| **Enable Settlement Editing** | `true` | Allow editing descriptions on Settlement pages |
-
-#### Features
-
-| Setting | Default | Description |
-|---|---|---|
-| **Enable Name Editing (Ctrl+N)** | `true` | Allow editing names on encyclopedia pages using Ctrl+N |
-| **Enable Banner/Flag Editing** | `true` | Allow editing banners/flags using `Ctrl+B` |
-| **Enable Culture Editing** | `true` | Allow changing a hero's culture using `Ctrl+U` |
-| **Enable Occupation Editing** | `true` | Allow changing a hero's occupation using `Ctrl+O` |
-| **Enable Tag Editing** | `true` | Allow adding player-defined tags to any encyclopedia entry using `Ctrl+G` |
-| **Tag Font Scale (%)** | `130` | Scales the font size of the tag display (50–300%). 100 = normal, 130 = default |
-| **Enable Journal** | `true` | Allow adding chronicle notes to any encyclopedia entry using `Ctrl+J` |
-| **Enable Auto-Chronicle** | `true` | Automatically log game events as chronicle notes |
-| **Enable Global Chronicle Panel** | `true` | Show a "Chronicle Notes" button on the campaign map |
-| **Enable Relation Notes** | `true` | Allow writing personal notes about hero relationships using `Ctrl+F` |
-| **Enable Auto-Tags** | `true` | Automatically generate tags for heroes based on game state (relation, party size, prisoner status). Auto-tags appear alongside manual tags with dimmed styling |
-| **Auto-Tag Enemy Relation** | `-30` | Heroes with relation at or below this threshold get an "Auto: Enemy" tag |
-| **Auto-Tag Friend Relation** | `30` | Heroes with relation at or above this threshold get an "Auto: Friend" tag |
-| **Auto-Tag Dangerous Party Size** | `200` | Heroes leading parties with at least this many troops get an "Auto: Dangerous" tag |
-| **Enable Lore Section** | `true` | Show the collapsible 'Lore' section on hero pages (Backstory, Personality, Goals, Relationships, Rumors) |
-| **Enable Info Stats** | `true` | Show the Info stats panel on encyclopedia pages (Hero/Clan/Kingdom/Settlement) |
-| **Show Edit Popup Portrait** | `true` | Display hero face portrait or clan/kingdom banner emblem in the edit popup title |
-| **Journal Page Size** | `10` | Number of journal/chronicle entries per page on encyclopedia pages (5–50) |
-| **Chronicle Panel Page Size** | `22` | Number of entries per page in the Global Chronicle Panel (5–50) |
-| **Prevent Kingdom Color Overwrites** | `true` | Re-applies custom banners when the game forces them back to default |
-| **Create Custom Banner** | Button | Opens bannerlord.party/banner in your browser |
-
-#### Management
-
-| Setting | Description |
-|---|---|
-| **Manage Custom Cultures** | View and delete custom culture assignments. Restores heroes to original culture |
-| **Manage Custom Occupations** | View and delete custom occupation assignments. Restores heroes to original occupation |
-| **Manage Tags** | View, rename, and delete tags across all entries |
-
-### 4. Export
-
-| Setting | Description |
-|---|---|
-| **Auto-Export on Save** | Automatically export all data to the shared JSON file every time a save occurs |
-| **Export All to JSON** | Exports all custom data to a shareable JSON file |
-| **Export Heroes Only** | Exports only Hero descriptions |
-| **Export Clans Only** | Exports only Clan descriptions |
-| **Export Kingdoms Only** | Exports only Kingdom descriptions |
-| **Export Settlements Only** | Exports only Settlement descriptions |
-| **Export Banners Only** | Exports only custom banner codes |
-
-### 5. Import
-
-| Setting | Description |
-|---|---|
-| **Auto-Import on Load** | Automatically import all data from the shared JSON file when a save is loaded |
-| **Import All from JSON** | Imports all data from a JSON file and merges into the current campaign |
-| **Import Banners Only** | Imports only custom banner codes from the JSON file |
-
-### 6. Reset
-
-| Setting | Description |
-|---|---|
-| **Reset All Descriptions** | Removes ALL custom descriptions from the current campaign (with confirmation) |
-
-### 7. Advanced
-
-| Setting | Default | Description |
-|---|---|---|
-| **Initial Key Poll Delay (ms)** | `500` | Delay before hotkeys start working on a page. Prevents accidental triggers. |
-| **Key Poll Interval (ms)** | `50` | How often the mod checks for hotkey presses. Lower = more responsive. |
-| **Max Description Length** | `5000` | Maximum characters for the main Description field. 0 = unlimited. |
-| **Max Narrative Field Length** | `5000` | Maximum characters for narrative fields (Backstory, Rumors/Secrets). 0 = unlimited. |
-| **Max Stats Field Length** | `5000` | Maximum characters for short stats fields (Personality, Goals, Relationships). 0 = unlimited. |
-| **Max Name Length** | `100` | Maximum characters allowed when editing names/titles via Ctrl+N (range 10–200). |
-| **Language** | `en` | Language for UI text. 12 options: en, tr, de, fr, es, zh, ru, pt, ko, ja, pl, uk. Requires restart. |
-
-### 8. Debug
-
-| Setting | Default | Description |
-|---|---|---|
-| **Debug Mode** | `false` | Enable verbose logging to a debug.log file in the EditableEncyclopedia config folder (with 5MB auto-rotation). |
-| **Show Debug On Screen** | `false` | When Debug Mode is enabled, also display debug messages as yellow in-game text. |
-
----
-
-## Technical Details (For Developers)
-
-### API Usage
-
-Other mods can integrate with Editable Encyclopedia using the public API:
+Export writes all custom data to `descriptions_export.json` (format **v11**, 19 data sections) and import merges it into another campaign, overwriting entries with the same id. You can export by type (Heroes / Clans / Kingdoms / Settlements / Banners only), and toggle Auto-Export on Save and Auto-Import on Load. The importer reads v1 through v11; missing sections are skipped.
+
+```
+Documents\Mount and Blade II Bannerlord\Configs\ModSettings\Global\EditableEncyclopedia\descriptions_export.json
+```
+
+### War Sails (v1.4.5)
+
+Everything works under the Naval DLC, which replaces encyclopedia initialization and drops some page handlers. The mod restores the missing handlers, the Chronicle Panel can still navigate to any Clan/Hero/Settlement page, and Harmony finalizers on `SetEncyclopediaPage`, `ExecuteLink`, and `OnTick` keep the missing handlers from crashing. Compat detection runs at startup and logs to `Logs\debug-compat.log`.
+
+## Settings (MCM)
+
+Configuration lives under Mod Options → Editable Encyclopedia, ~71 options. Settings are an MCM v5 `AttributeGlobalSettings<MCMSettings>`; read them at runtime via `MCMSettings.Instance`. If MCM isn't installed, `Instance` is null and the mod falls back to hard-coded defaults everywhere.
+
+Nine groups:
+
+1. **Info / About** — Author, Version, Join Discord, Encyclopedia Edit Statistics (a breakdown popup of every custom edit), Open Config Folder
+2. **General** — Hints (per-shortcut hint toggles, all on by default) and Display (confirmation messages, `[Edited]` indicator, edit timestamp)
+3. **Editing** — Pages (enable per entity type), Features (enable per feature, plus auto-tag thresholds, tag font scale, journal/chronicle page sizes, kingdom-colour protection, Create Custom Banner), and Management (Manage Custom Cultures / Occupations / Tags / Tag Presets / Tag Categories, Filter by Tag)
+4. **Export** — Auto-Export on Save plus the per-type export buttons
+5. **Import** — Auto-Import on Load, Import All, Import Banners Only
+6. **Reset** — Reset All Descriptions
+7. **Advanced** — key poll delay (default 500ms) and interval (default 50ms), max description / narrative / stats lengths (default 5000 each, 0 = unlimited), max name length (default 100), and the language dropdown (12 languages)
+8. **Debug** — Debug Mode (verbose logging) and Show Debug On Screen
+9. **Extensions** — EEWebExtension settings; the toggle locks off and the section reports "Not installed" unless the optional `EEWebExtension` module is present
+
+Localization covers 12 languages: English, Turkish, German, French, Spanish, Chinese, Russian, Portuguese, Korean, Japanese, Polish, Ukrainian. The MCM labels themselves are also translated.
+
+**Debug log** goes to `…\EditableEncyclopedia\Logs\debug.log`, written only when Debug Mode is on. It rotates to `debug.old.log` past 5 MB. The static `MCMSettings.DebugLog(string)` is the logging entry point used across the codebase, and it's safe to call when MCM isn't installed.
+
+## How it works
+
+### Startup
+
+`SubModuleClassEntry.OnSubModuleLoad()` creates and registers the UIExtenderEx mixins (which is how settlement nameplates get their banner/name refresh on the map), then initializes localization from the MCM language setting (fallback `en`). `OnGameStart()` registers `EncyclopediaEditBehavior` as a campaign behavior and, on first start, runs Harmony setup: `PatchAll()` for the attribute-based page patches plus four manual patches — encyclopedia list names, clan banner reversion, the save sanitizer, and the settlement tooltip culture line. `OnSubModuleUnloaded()` unpatches everything.
+
+### The core loop
+
+`OnApplicationTick(dt)` runs every frame and drives all the deferred, main-thread work: banner refresh and watchdog, the deferred Gauntlet popup show, every `*SectionInjector`'s `TickMainThread()`, the char-limit override, custom-culture reapply after a save load, and deferred settlement cultures. This indirection exists because Harmony patches fire on background threads and the key poller runs on a timer thread, but Gauntlet UI is not thread-safe and must be touched on the main thread. So everything queues a flag and gets picked up here.
+
+### UI injection
+
+Each `*SectionInjector` follows one pattern. A Harmony **postfix** on a page's `Refresh()` walks the live Gauntlet widget tree, finds an anchor (usually `EncyclopediaDividerButtonWidget`), and injects the custom widgets — timestamp, tags, lore section, journal, relation notes, timeline — as siblings or children. Anything that can't run during the patch is deferred to `TickMainThread()`. On non-map screens (Clan / Party / Inventory) where the encyclopedia overlay isn't ready yet, injection is deferred ~200ms and retried until the layer appears.
+
+### Persistence
+
+`EncyclopediaEditBehavior` is a `CampaignBehaviorBase` singleton (`EncyclopediaEditBehavior.Instance`). It holds 18 `[SaveableField]` dictionaries (IDs 1–18), all keyed by entity `StringId`, often with a typed key prefix:
+
+`_customDescriptions`, `_customNames`, `_editTimestamps`, `_customBannerCodes`, `_customCultures`, `_customOccupations`, `_customCultureDefs`, `_heroInfoFields`, `_customTags`, `_journalEntries`, `_relationNotes`, `_relationHistory`, `_tagNotes`, `_tagCategories`, `_tagPresets`, `_perHeroAutoTagThresholds`, `_relationNoteTags`, `_relationNoteTagLocks`.
+
+A 19th field, `_battleStats` (per-hero counters for wins, losses, captures, hero-kills, troop-kills and tournaments, which don't decay with the journal-trim cap), was added later out of sequence as ID 19. `SyncData(IDataStore)` is the entry point; it syncs all of these plus a non-attributed timeline-collapse dictionary, detects load via `dataStore.IsLoading`, and queues the reapply flags (`NeedsBannerReapply`, `NeedsCustomCultureReapply`, `NeedsNameReapply`) for the next tick. The save definer registers under ID 82946102.
+
+### Threading
+
+The key poller runs on a `System.Threading.Timer` and reads hotkeys via the `GetAsyncKeyState` P/Invoke (initial delay 500ms, poll interval 50ms, both configurable). When it detects a combo, it queues an action for the main thread rather than touching UI directly. Close detection uses a three-tier strategy (cached `IsEncyclopediaOpen` field, then layer-reference check, then layer-count fallback) with a 6-poll / 300ms debounce so page transitions don't read as "closed". The encyclopedia itself is a layer on the map screen, not a separate screen, so `ScreenManager.TopScreen` is always the map.
+
+## For modders
+
+`EditableEncyclopediaAPI` is a static class. Reference `EditableEncyclopedia.dll` (with `<Private>False</Private>`), declare the `EditableEncyclopedia` dependency in your `SubModule.xml`, and `using EditableEncyclopedia;`. Check the gate first:
 
 ```csharp
-// Check if Editable Encyclopedia is loaded
 if (EditableEncyclopediaAPI.IsAvailable)
 {
-    // ── Descriptions ──────────────────────────────────────────
     string notes = EditableEncyclopediaAPI.GetHeroDescription(hero);
-    string clanNotes = EditableEncyclopediaAPI.GetClanDescription(clan);
-    string kingdomNotes = EditableEncyclopediaAPI.GetKingdomDescription(kingdom);
-    string settlementNotes = EditableEncyclopediaAPI.GetSettlementDescription(settlement);
-
-    // Bulk retrieval
-    Dictionary<string, string> allNotes = EditableEncyclopediaAPI.GetAllDescriptions();
-    var heroNotes = EditableEncyclopediaAPI.GetAllHeroDescriptions();
-    var clanDescs = EditableEncyclopediaAPI.GetAllClanDescriptions();
-    var kingdomDescs = EditableEncyclopediaAPI.GetAllKingdomDescriptions();
-    var settlementDescs = EditableEncyclopediaAPI.GetAllSettlementDescriptions();
-
-    // ── Custom Names, Titles & Banners (via Behavior Instance) ─
-    var behavior = EncyclopediaEditBehavior.Instance;
-    string customName = behavior.GetCustomName(hero.StringId);
-    bool hasName = behavior.HasCustomName(hero.StringId);
-    string bannerCode = behavior.GetCustomBannerCode(clan.StringId);
-    bool hasBanner = behavior.HasCustomBanner(clan.StringId);
-
-    // Bulk export (used by SharedFileExporter)
-    var allNames = behavior.GetAllCustomNames();
-    var allBanners = behavior.GetAllCustomBanners();
-
-    // ── Info Stats (computed from live game state) ─────────────
-    var heroStats = EditableEncyclopediaAPI.GetHeroInfoStats(hero);
-    // Returns: Culture, Occupation, Kingdom, Location, Status, Spouse,
-    //          Troops, Morale, Companions, Caravans, Towns, Castles,
-    //          Garrisons, Workshops, Kills, Battles, Tournaments,
-    //          Hall Rank, Influence
-
-    var clanStats = EditableEncyclopediaAPI.GetClanInfoStats(clan);
-    // Returns: Kingdom, Leader, Culture, Renown, Influence, Troops,
-    //          Parties, Lords, Companions, Towns, Castles, Villages
-
-    var kingdomStats = EditableEncyclopediaAPI.GetKingdomInfoStats(kingdom);
-    // Returns: Ruler, Culture, Clans, Lords, Towns, Castles, Villages,
-    //          Total Troops, Total Garrisons, Active Wars, At War With
-
-    var settlementStats = EditableEncyclopediaAPI.GetSettlementInfoStats(settlement);
-    // Returns: Owner, Clan, Kingdom, Culture, Prosperity, Loyalty,
-    //          Security, Food, Garrison, Militia, Wall Level,
-    //          Workshops, Governor, Bound Villages, Notables
-
-    // ── Hero Lore (all fields at once) ───────────────────────
-    var allLore = EditableEncyclopediaAPI.GetAllHeroLoreFields(hero.StringId);
-    // Returns: backstory, personality, goals, relationships, rumors, chronicle
-    bool hasLore = EditableEncyclopediaAPI.HasHeroLore(hero.StringId);
-
-    // ── Lore Story Templates (Character Roles) ──────────────
-    string[] roles = EditableEncyclopediaAPI.GetAvailableRoles();
-    // Returns: ["Lord", "Merchant", "Wanderer", "GangLeader", "Preacher"]
-
-    // Get resolved template for a specific hero (placeholders filled in)
-    string backstoryTemplate = EditableEncyclopediaAPI.GetLoreTemplate("backstory", hero.StringId);
-    // Returns: "Born in: Epicrotea\nNoble House: Argoros\nCulture: Empire\n..."
-
-    // Get raw template for a role (with placeholders)
-    string lordBackstory = EditableEncyclopediaAPI.GetRoleTemplate("Lord", "backstory");
-    // Returns: "Born in: {settlement}\nNoble House: {clan}\nCulture: {culture}\n..."
-
-    // Get ALL templates for a role
-    var lordTemplates = EditableEncyclopediaAPI.GetAllRoleTemplates("Lord");
-    // Returns: { "backstory": "...", "personality": "...", "goals": "...",
-    //            "relationships": "...", "rumors": "..." }
-
-    string[] templateFields = EditableEncyclopediaAPI.GetTemplateFieldKeys();
-    // Returns: ["backstory", "personality", "goals", "relationships", "rumors"]
-
-    // ── Chronicle (world history) ────────────────────────────
-    string heroChronicle = EditableEncyclopediaAPI.GetHeroChronicle(hero.StringId);
-    var allChronicle = EditableEncyclopediaAPI.GetAllChronicleEntries();
-    // Returns flat list of all world events with EntityId, Date, Text
-
-    // ── Hero Lore Fields (v2.0.0+) ───────────────────────────
-    // Fields: "backstory", "personality", "goals", "relationships", "rumors", "chronicle"
-    string backstory = EditableEncyclopediaAPI.GetHeroInfoField("backstory", hero.StringId);
-    string personality = EditableEncyclopediaAPI.GetHeroInfoField("personality", hero.StringId);
-    string goals = EditableEncyclopediaAPI.GetHeroInfoField("goals", hero.StringId);
-    string relationships = EditableEncyclopediaAPI.GetHeroInfoField("relationships", hero.StringId);
-    string rumors = EditableEncyclopediaAPI.GetHeroInfoField("rumors", hero.StringId);
-    string chronicle = EditableEncyclopediaAPI.GetHeroInfoField("chronicle", hero.StringId);
-    var allLoreFields = EditableEncyclopediaAPI.GetAllHeroInfoFieldsForExport();
-
-    // ── Culture & Occupation ──────────────────────────────────
-    string culture = EditableEncyclopediaAPI.GetHeroCulture(hero.StringId);
-    string occupation = EditableEncyclopediaAPI.GetHeroOccupation(hero.StringId);
-    string displayName = EditableEncyclopediaAPI.GetOccupationDisplayName("GangLeader");
-    var allCultures = EditableEncyclopediaAPI.GetAllCustomCultures();
-    var allOccupations = EditableEncyclopediaAPI.GetAllCustomOccupations();
-
-    // ── Tags (v2.0.0+) ───────────────────────────────────────
-    string tags = EditableEncyclopediaAPI.GetTags(hero.StringId);
-
-    // Advanced tag queries
-    var allUniqueTags = EditableEncyclopediaAPI.GetAllUniqueTags();
-    var allies = EditableEncyclopediaAPI.GetObjectsWithTag("ally");
-    var anyMatch = EditableEncyclopediaAPI.GetObjectsWithAnyTag(new[] { "ally", "friend" });
-    var allMatch = EditableEncyclopediaAPI.GetObjectsWithAllTags(new[] { "ally", "king" });
-    var tagCounts = EditableEncyclopediaAPI.GetTagUsageCounts();
-    int allyCount = EditableEncyclopediaAPI.GetTagUsageCount("ally");
-
-    // Bulk tag operations
-    EditableEncyclopediaAPI.RenameTagGlobal("oldTag", "newTag");
-    EditableEncyclopediaAPI.RemoveTagGlobal("obsoleteTag");
-    EditableEncyclopediaAPI.MergeTags("sourceTag", "targetTag");
-    EditableEncyclopediaAPI.AddTagToMultiple(objectIds, "newTag");
-    EditableEncyclopediaAPI.RemoveTagFromMultiple(objectIds, "oldTag");
-    EditableEncyclopediaAPI.ClearAllTags();
-
-    // ── Journal / Chronicle (v2.0.0+) ────────────────────────
-    var journal = EditableEncyclopediaAPI.GetJournalEntries(hero.StringId);
-
-    // ── Relation Notes & History (v2.0.0+) ────────────────────
-    var history = EditableEncyclopediaAPI.GetRelationHistory();
-    var heroHistory = EditableEncyclopediaAPI.GetRelationHistoryForHero(hero.StringId);
-
-    // ── Import with detailed results ──────────────────────────
-    ImportResult result = EditableEncyclopediaAPI.ImportFromSharedFileDetailed();
 }
 ```
 
-### Save Data
+`IsAvailable` is true only when the mod is loaded and a campaign is active. Every method returns a safe default (null, 0, -1, or an empty collection) when it isn't, so a missing dependency won't throw.
 
-- Custom data is stored in your campaign save file via `CampaignBehaviorBase` with 18 `[SaveableField]` dictionaries (IDs 1-18)
-- Each entry is keyed by the object's `StringId`
-- Data survives save/load cycles automatically
+Events:
 
-| # | Field | Contents |
-|---|---|---|
-| 1 | `_customDescriptions` | Main descriptions for all entity types |
-| 2 | `_customNames` | Custom display names and titles |
-| 3 | `_editTimestamps` | In-game date when each entry was last edited |
-| 4 | `_customBannerCodes` | Custom banner/flag codes |
-| 5 | `_customCultures` | Custom hero culture assignments |
-| 6 | `_customOccupations` | Custom hero occupation assignments |
-| 7 | `_customCultureDefs` | Custom culture troop tree definitions |
-| 8 | `_heroInfoFields` | Hero lore fields (backstory, personality, goals, relationships, rumors) |
-| 9 | `_customTags` | Player-defined tags for all entity types |
-| 10 | `_journalEntries` | Chronicle/journal entries (auto and manual) |
-| 11 | `_relationNotes` | Hero-to-hero relationship notes |
-| 12 | `_relationHistory` | Automatic relation score change tracking |
-| 13 | `_tagNotes` | Per-tag annotations on entities |
-| 14 | `_tagCategories` | Custom tag category groupings |
-| 15 | `_tagPresets` | Saved tag preset configurations |
-| 16 | `_perHeroAutoTagThresholds` | Per-hero auto-tag threshold overrides |
-| 17 | `_relationNoteTags` | Tags assigned to relation notes |
-| 18 | `_relationNoteTagLocks` | Lock state for relation note tags |
+- `OnDescriptionChanged` — `(objectId, newDescription)`, null description means removed
+- `OnTagsChanged` — `(objectId, newTags)`
+- `OnJournalChanged` — `(objectId)`
+- `OnRelationNoteChanged` — `(heroId, targetHeroId, note)`
 
-### Export Format (JSON v11)
+Read/write surface, grouped:
 
-The JSON export includes metadata and all custom data (19 sections):
+- **Descriptions** — `GetDescription` / `SetDescription` / `HasDescription`, typed getters (`GetHeroDescription`, `GetClanDescription`, `GetKingdomDescription`, `GetSettlementDescription`), bulk (`GetAllDescriptions`, the per-type `GetAll*Descriptions`), `ResetAllDescriptions`
+- **Culture / occupation** — `GetHeroCulture`, `GetHeroOccupation`, `GetOccupationDisplayName`, `GetAllCustomCultures`, `GetAllCustomOccupations`
+- **Hero lore fields** — `GetHeroInfoField` / `SetHeroInfoField`, `GetAllHeroLoreFields`, `HasHeroLore`, `GetInfoFieldKeys`
+- **Lore templates** — `GetLoreTemplate`, `GetRoleTemplate`, `GetAllRoleTemplates`, `GetAvailableRoles`, `GetTemplateFieldKeys`
+- **Tags** — `GetTags` / `SetTags`, query (`GetObjectsWithTag`, `GetObjectsWithAnyTag`, `GetObjectsWithAllTags`, usage counts), bulk ops (`RenameTagGlobal`, `RemoveTagGlobal`, `MergeTags`, `AddTagToMultiple`, `RemoveTagFromMultiple`, `ClearAllTags`), categories and presets
+- **Journal / chronicle** — `GetJournalEntries`, `AddJournalEntry`, `GetHeroChronicle`, `GetAllChronicleEntries`
+- **Relation notes** — `GetRelationNote` / `SetRelationNote` (main-hero overloads and arbitrary-pair overloads), `GetRelationHistory`, `GetRelationHistoryForHero`
+- **Computed stats** (live game state, every key always present via a `SafeGet` fallback) — `GetHeroInfoStats`, `GetClanInfoStats`, `GetKingdomInfoStats`, `GetSettlementInfoStats`
+- **Files** — `ExportToSharedFile`, `ImportFromSharedFile`, `ImportFromSharedFileDetailed` (per-section `ImportResult`), `GetSharedFilePath`, per-type export helpers
 
-```json
-{
-  "version": 11,
-  "exportedAt": "2026-03-16T12:00:00.0000000Z",
-  "descriptionCount": 2,
-  "descriptions": {
-    "lord_1_1": "Derthert is the aging king of Vlandia...",
-    "settlement_town_V1": "Pravend is a coastal town..."
-  },
-  "nameCount": 1,
-  "names": {
-    "lord_1_1": "King Derthert the Bold"
-  },
-  "titleCount": 1,
-  "titles": {
-    "lord_1_1": "High King of Vlandia"
-  },
-  "bannerCount": 0,
-  "banners": {},
-  "cultureCount": 1,
-  "cultures": {
-    "main_hero": "nord|Viking Warrior"
-  },
-  "occupationCount": 1,
-  "occupations": {
-    "main_hero": "GangLeader"
-  },
-  "cultureDefCount": 1,
-  "cultureDefs": {
-    "nord": "nord_recruit,nord_footman,nord_warrior"
-  },
-  "heroInfoFieldCount": 1,
-  "heroInfoFields": {
-    "backstory_lord_1_1": "Born in the highlands..."
-  },
-  "tagCount": 1,
-  "tags": {
-    "lord_1_1": "ally, king"
-  },
-  "timestampCount": 1,
-  "timestamps": {
-    "lord_1_1": "Day 15 of Spring, 1084"
-  },
-  "journalCount": 1,
-  "journal": {
-    "lord_1_1": "Day 15 of Spring, 1084|[War] Defeated Ragnar near Varcheg (150 vs 200)\nDay 16 of Spring, 1084|[Politics] Became ruler of Vlandia"
-  },
-  "relationNoteCount": 1,
-  "relationNotes": {
-    "main_hero_lord_1_1": "Trusted ally and king"
-  },
-  "tagNoteCount": 1,
-  "tagNotes": {
-    "lord_1_1|ally": "Helped me in the siege of Pravend"
-  },
-  "relationHistoryCount": 1,
-  "relationHistory": {
-    "main_hero_lord_1_1": "Day 5 of Spring, 1085|+5|Helped in battle"
-  },
-  "tagCategoryCount": 1,
-  "tagCategories": {
-    "Diplomacy": "ally, enemy, neutral"
-  },
-  "tagPresetCount": 1,
-  "tagPresets": {
-    "War Leaders": "king, general, commander"
-  },
-  "perHeroAutoTagThresholdCount": 1,
-  "perHeroAutoTagThresholds": {
-    "lord_1_1": "-50|50"
-  }
-}
-```
+Custom names, titles, and banners are read off the `EncyclopediaEditBehavior.Instance` singleton, not the static API: `GetCustomName`, `HasCustomName`, `GetAllCustomNames`, `GetCustomBannerCode`, `HasCustomBanner`, `GetAllCustomBanners`. If you don't want a DLL reference, parse the export JSON directly via `SharedFileExporter.ImportAll()`.
 
-### How It Works
+Full method signatures, the JSON section formats, and the two integration approaches are in **INTEGRATION.md**.
 
-1. Uses **Harmony** to patch encyclopedia page `Refresh()` methods (postfix patches)
-2. Polls for 10 hotkey combos (`Ctrl+E/N/B/U/O/G/J/F/R/Z`) via a background timer using Win32 `GetAsyncKeyState`
-3. Displays native Bannerlord dialogs for editing (text inquiry) and custom Gauntlet popups where supported
-4. All widget operations are deferred to the main game thread (Gauntlet is not thread-safe)
-5. Navigation guard patches 10+ methods to prevent page changes during edits
-6. Poller runs for the duration of the campaign and only acts when an encyclopedia object is tracked
+## File map
 
----
+| File                                            | ~Lines  | What it does                                                                                                                                                                                                                         |
+| ----------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `EditableEncyclopediaPatches.cs`                | ~20,300 | The monolith. 27+ classes: Harmony page patches, key polling, page tracking, edit/reset/undo, name/culture/occupation/banner/tag editing, nav guard, save sanitizer, custom culture manager, hero portrait + banner emblem rendering |
+| `EncyclopediaEditBehavior.cs`                   | ~3,090  | Persistence. The SaveableField dictionaries, `SyncData`, the auto-journal event handlers (16+ event types), import/export helpers, the singleton                                                                                     |
+| `EditableEncyclopediaAPI.cs`                    | ~995    | The public static cross-mod API: events, getters/setters, computed stats                                                                                                                                                             |
+| `MCMSettings.cs`                                | ~1,560  | MCM v5 settings, the management dialogs, and `DebugLog()`                                                                                                                                                                            |
+| `GlobalChroniclePanel.cs`                       | ~3,829  | The campaign-map history overlay                                                                                                                                                                                                     |
+| `JournalSectionInjector.cs`                     | ~2,727  | The collapsible journal section                                                                                                                                                                                                      |
+| `TagWidgetInjector.cs`                          | ~1,835  | The tag display row, with reflection caching                                                                                                                                                                                         |
+| `Timeline/HeroTimelineSectionInjector.cs`       | ~1,739  | The hero timeline section                                                                                                                                                                                                            |
+| `LoreSectionInjector.cs`                        | ~1,806  | The narrative lore section                                                                                                                                                                                                           |
+| `RelationNotes/RelationNotesSectionInjector.cs` | ~1,224  | The relation-notes section                                                                                                                                                                                                           |
+| `Localization.cs`                               | ~1,531  | 12-language text system                                                                                                                                                                                                              |
+| `SharedFileExporter.cs`                         | ~530    | Hand-rolled JSON v11 export/import (no external library)                                                                                                                                                                             |
+| `SubModuleClassEntry.cs`                        | ~228    | Startup chain                                                                                                                                                                                                                        |
 
-## Troubleshooting
+Total is roughly 49,600 lines of C# across 28 source files. The `.csproj` sets `EnableDefaultCompileItems=false`, so every `.cs` file is listed in explicit `<Compile>` items — add a new file there or it silently won't compile.
 
-<details>
-<summary><strong>The Ctrl+E prompt doesn't appear</strong></summary>
+## Build
 
-- Make sure **"Show Edit Hint"** is enabled in MCM settings
-- Check that the page type is enabled (e.g., **"Enable Hero Editing"**)
-- Try increasing the **"Initial Key Poll Delay"** if it happens immediately after opening a page
+Open `MY Mod.sln` in Visual Studio 2017+ and build, or run `dotnet build EditableEncyclopedia.csproj` (it targets .NET Framework 4.7.2 and builds fine that way). MSBuild compiles the sources and the post-build step copies the DLLs, the Gauntlet GUI prefab XMLs, and the LoreStory templates into the Bannerlord Modules folder.
 
-</details>
+Game references and the copy target use `$(GameFolder)`, hardcoded in the `.csproj` to `H:\steam\steamapps\common\Mount & Blade II Bannerlord`. Change it if your install is elsewhere. Game DLLs are referenced from the Steam install via `HintPath`.
 
-<details>
-<summary><strong>Ctrl+E doesn't work</strong></summary>
+One gotcha after rebuilding: the launcher caches mod DLLs. Quitting only the game isn't enough — kill `BannerlordLauncher.exe` too, or it keeps serving the old code.
 
-- Ensure the encyclopedia page has fully loaded
-- Try enabling **Debug Mode** to see detailed logging in the debug.log file
-- Check that no other mod is interfering with the `E` key
+## Other docs
 
-</details>
-
-<details>
-<summary><strong>My descriptions disappeared after loading a save</strong></summary>
-
-- Make sure the mod is enabled when you load the save
-- Descriptions are tied to the `StringId` of objects — if the game changes an ID (rare), the description may not match
-
-</details>
-
-<details>
-<summary><strong>Import/Export doesn't work</strong></summary>
-
-- Ensure you have an active campaign loaded (not in main menu)
-- Check that the export file exists in the correct location
-- Verify the JSON format is valid if manually editing the file
-
-</details>
-
-<details>
-<summary><strong>Global Chronicle Panel button doesn't appear</strong></summary>
-
-- Ensure **"Enable Global Chronicle Panel"** is enabled in MCM settings (3. Editing/Features)
-- The button injects into the campaign map HUD — it may take a few seconds after loading
-
-</details>
-
-<details>
-<summary><strong>Encyclopedia crashes or freezes with Naval DLC</strong></summary>
-
-- This mod includes full NavalDLC compatibility patches that are applied automatically
-- If you still experience issues, enable **Debug Mode** and check the log for `SetEncyclopediaPage` or `ExecuteLink` errors
-- The first time you navigate from the Chronicle Panel to a Clan page, the mod installs safety patches — a brief delay is normal
-- Ensure you're using the latest version (v2.3.0+) which includes all NavalDLC fixes
-
-</details>
-
-<details>
-<summary><strong>I see red error messages</strong></summary>
-
-- Enable **Debug Mode** for detailed logging to the debug.log file
-- Check the log at: `Documents\Mount and Blade II Bannerlord\Configs\ModSettings\Global\EditableEncyclopedia\Logs\debug.log`
-- Report issues on the [Discord server](https://discord.com/users/404393620897136640)
-
-</details>
-
----
-
-## Discord & Support
-
-Join the community Discord for support, suggestions, and discussion:
-
-[![Discord](https://img.shields.io/badge/Join%20Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/users/404393620897136640)
-
----
-
-## License
-
-This mod is licensed under the [MIT License](https://opensource.org/licenses/MIT).
-
-Copyright (c) 2024-2026 XMuPb
-
----
-
-## Credits
-
-| | |
-|---|---|
-| **Author** | [XMuPb](https://github.com/XMuPb) |
-| **Harmony** | [Pardeike](https://github.com/pardeike/Harmony) |
-| **MCM v5** | Mod Configuration Menu team |
-| **ButterLib** | ButterLib Team |
-| **UIExtenderEx** | UIExtenderEx Team |
-
----
-
-## Changelog
-
-For the full version history, see [CHANGELOG.md](CHANGELOG.md).
-
+- **QUICKSTART.md** — install and a first-edit walkthrough, in a couple of minutes
+- **CODEBASE.md** — the deeper architecture: file map, runtime flows, the injector pattern, the threading model
+- **INTEGRATION.md** — the full cross-mod API reference and the JSON export format
+- **CHANGELOG.md** — version history

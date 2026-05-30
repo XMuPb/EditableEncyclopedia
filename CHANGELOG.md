@@ -4,6 +4,30 @@ All notable changes to Editable Encyclopedia are documented here.
 
 ---
 
+## v2.5.2 (2026-05-26)
+
+Bannerlord v1.4.5 (War Sails) compatibility. If you didn't update Bannerlord past v1.3.x, this release is a no-op for you.
+
+### What broke in v1.4.5
+
+The Bannerlord v1.4.5 patch (May 21) shipped alongside the War Sails DLC and refactored parts of the encyclopedia subsystem. The mod's Chronicle Notes feature builds clickable source links pointing at encyclopedia entities (Hero, Clan, Settlement, etc.) and our code constructed those links by hand as `"Encyclopedia/Clan/clan_X"`. That string format doesn't match what the v1.4.5 engine actually parses — clicking a clan source link triggered a chain of NREs ending in a hard CTD on War Sails clans (and, after more digging, vanilla clans too). Heroes still worked because the construct happened to overlap with the engine's expected format for that page type.
+
+### What changed
+
+- New file `EncyclopediaCompat.cs` — detects engine API mode (Legacy_1_3 / Modern_1_4) at startup, logs the detection result to a new `debug-compat.log` sibling file. The file-write bypass exists because `MCMSettings.DebugLog` silently drops messages during `OnSubModuleLoad` (before MCMv5 finishes deserializing), so the normal `debug.log` channel can't always confirm whether early-init code ran.
+- Chronicle source-click navigation now reads the engine's own `entity.EncyclopediaLink` property and passes that to `EncyclopediaManager.GoToLink(string)`. Vanilla returns formats like `"Faction-clan_empire_south_5"` for clans (note: "Faction" prefix, not "Clan"; hyphen delimiter, not slash). Hand-built link paths are kept only as a fallback if the property is null.
+- `EnsurePagesPopulated()` in `EncyclopediaCompat.cs` — at every navigation, walks `EncyclopediaManager.GetEncyclopediaPages()` and writes each page's `_identifierTypes` into `_pages` if missing. Belt-and-suspenders for DLC-added pages that may forget to register themselves; cached per Campaign instance so it runs once.
+- `EnsureSetEncyclopediaPagePatched` (the legacy v1.3.x SetEncyclopediaPage prefix installer in `JournalSectionInjector.cs`) now early-returns in Modern mode. The legacy method doesn't exist in v1.4.5; trying to patch it just wasted reflection lookups every navigation.
+- Removed `GauntletChatLogViewDiagnostics.cs` from the build. The Harmony finalizers it installed on `GauntletChatLogView.OnLateTick/HandleInput` were diagnostic instrumentation added during the v1.4.5 investigation, but on v1.4.5 their MonoMod-generated IL wrapper itself NRE'd inside the harness, turning contained engine-side NREs into hard CTDs. File stays on disk for future re-enabling on older Bannerlord versions if needed.
+
+### Notes
+
+- Save-compatible. No `[SaveableField]` changes, no migration. Install over v2.5.1, restart Bannerlord.
+- Detection log lives at `Documents\Mount and Blade II Bannerlord\Configs\ModSettings\Global\EditableEncyclopedia\Logs\debug-compat.log`. Expect one line per game launch confirming "Detected MODERN 1.4.5+ API" (or LEGACY for pre-1.4.5 installs).
+- If you're still on Bannerlord v1.2.x–v1.3.x, the legacy code paths are unchanged. The compat shim just logs "LEGACY 1.3.x API" and stays out of the way.
+
+---
+
 ## v2.5.1 (2026-05-09)
 
 Stability release. No new features. Install over v2.5.0, restart Bannerlord, you're done. Saves are compatible.
